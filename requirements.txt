@@ -1,0 +1,3 @@
+fastmcp==3.4.7
+bring-api==1.1.2
+aiohttp==3.14.3
