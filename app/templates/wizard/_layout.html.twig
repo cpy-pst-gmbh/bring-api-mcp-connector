@@ -1,0 +1,61 @@
+{#
+  Shared shell for signing in and setting up. Login is not a separate place —
+  it is the first step of the same flow, so both render inside one card.
+
+  Callers embed this and fill the `form` block; `current_step` decides which of
+  the three is highlighted. Steps that lie ahead are dimmed rather than hidden,
+  so the whole path is visible from the start.
+#}
+{% set steps = [
+    { key: 'login', number: 1 },
+    { key: 'connector', number: 2 },
+    { key: 'claude', number: 3 },
+] %}
+
+<div>
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="grid md:grid-cols-[1fr_18rem]">
+            <div class="p-6 sm:p-8">
+                {% block form %}{% endblock %}
+            </div>
+
+            {# order-first puts the steps between the header and the form on a
+               narrow screen; from md up the grid places them in the right
+               column and the DOM order applies again. #}
+            <aside class="order-first border-b border-slate-200 bg-slate-50 p-6 sm:p-8 md:order-none md:border-b-0 md:border-l"
+                   aria-label="{{ 'wizard.steps_label'|trans }}">
+                <ol class="space-y-6">
+                    {% for step in steps %}
+                        {% set is_current = step.number == current_step %}
+                        {% set is_done = step.number < current_step %}
+
+                        <li class="flex gap-3 {{ is_current ? '' : 'opacity-45' }}"
+                            {{ is_current ? 'aria-current="step"' : '' }}>
+                            <span class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold
+                                         {{ is_current
+                                            ? 'bg-slate-900 text-white'
+                                            : (is_done ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600') }}">
+                                {% if is_done %}
+                                    {{ include('icon/check.html.twig', {class: 'size-4'}) }}
+                                {% else %}
+                                    {{ step.number }}
+                                {% endif %}
+                            </span>
+
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-slate-900">
+                                    {{ ('wizard.step.' ~ step.key ~ '.title')|trans }}
+                                </p>
+                                <p class="mt-1 text-sm text-slate-500">
+                                    {{ ('wizard.step.' ~ step.key ~ '.description')|trans }}
+                                </p>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ol>
+            </aside>
+        </div>
+    </div>
+
+    {% block below %}{% endblock %}
+</div>

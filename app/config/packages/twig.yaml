@@ -1,0 +1,12 @@
+twig:
+    file_name_pattern: '*.twig'
+    form_themes:
+        - 'form/theme.html.twig'
+    globals:
+        # Footer links. Each may be an external address or a Markdown file we
+        # serve ourselves, so the service works out the href.
+        legal: '@App\Legal\LegalDocuments'
+
+when@test:
+    twig:
+        strict_variables: true

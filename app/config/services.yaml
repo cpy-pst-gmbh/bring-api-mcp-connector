@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
+
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+# See also https://symfony.com/doc/current/service_container/import.html
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    # Signing in waits on Bring!, so this caps how long a user stares at a
+    # spinner before being offered the login link instead.
+    app.bring_login_timeout: 8.0
+    # Headers Bring! expects on every request. Not secrets — bring-api ships
+    # the same key in public — but Bring can change them, and then swapping a
+    # value should not require a deploy. Defaults live in .env.
+    app.bring.base_url: '%env(BRING_API_BASE_URL)%'
+    app.bring.api_key: '%env(BRING_API_KEY)%'
+    app.bring.client: '%env(BRING_CLIENT)%'
+    app.bring.application: '%env(BRING_APPLICATION)%'
+    app.bring.country: '%env(BRING_COUNTRY)%'
+    # Sender of the login-link mail.
+    app.mail_from: '%env(string:default:app.mail_from_default:MAIL_FROM)%'
+    app.mail_from_default: 'no-reply@localhost'
+    # Callback Claude sends users back to after they authorize a connector.
+    app.connector_redirect_uri: '%env(default:app.connector_redirect_uri_default:CONNECTOR_REDIRECT_URI)%'
+    app.connector_redirect_uri_default: 'https://claude.ai/api/mcp/auth_callback'
+    # Shared fallback: the env processor needs a parameter to point at, and an
+    # unset variable has to come out as '' rather than null so Twig and typed
+    # arguments can treat "not configured" as empty.
+    app.empty_string: ''
+    # Shown on the account page so users can paste it into Claude.
+    app.mcp_endpoint: '%env(string:default:app.empty_string:MCP_ENDPOINT)%'
+    # What /health polls on the MCP server. Empty derives it from
+    # app.mcp_endpoint; set it to reach the container directly instead of
+    # going back out through the proxy.
+    app.mcp_health_url: '%env(string:default:app.empty_string:MCP_HEALTH_URL)%'
+    # Footer links. Empty means the link is left out entirely.
+    # Markdown appended to every outgoing email. Empty sends them unsigned.
+    app.mail_signature: '%env(string:default:app.empty_string:MAIL_SIGNATURE)%'
+    app.privacy_policy_url: '%env(string:default:app.empty_string:PRIVACY_POLICY_URL)%'
+    app.imprint_url: '%env(string:default:app.empty_string:IMPRINT_URL)%'
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones

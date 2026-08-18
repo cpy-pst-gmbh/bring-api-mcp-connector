@@ -1,0 +1,9 @@
+<p>{{ 'email.login_link.greeting'|trans }}</p>
+
+<p>{{ 'email.login_link.lead'|trans }}</p>
+
+<p><a href="{{ link }}">{{ 'email.login_link.action'|trans }}</a></p>
+
+<p>{{ 'email.login_link.expiry'|trans({'%date%': expires_at|date('Y-m-d H:i')}) }}</p>
+
+<p>{{ 'email.login_link.ignore'|trans }}</p>

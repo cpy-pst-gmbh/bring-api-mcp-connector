@@ -10,11 +10,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY src/ ./src/
+COPY server.py .
 
 RUN useradd --create-home --uid 10001 app
 USER app
 
 EXPOSE 8080
 
-CMD ["python", "-m", "src.server"]
+CMD ["python", "server.py"]

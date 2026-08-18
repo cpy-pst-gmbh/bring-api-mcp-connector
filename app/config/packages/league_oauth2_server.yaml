@@ -1,0 +1,34 @@
+league_oauth2_server:
+    authorization_server:
+        private_key: '%env(resolve:OAUTH_PRIVATE_KEY)%'
+        private_key_passphrase: '%env(resolve:OAUTH_PASSPHRASE)%'
+        encryption_key: '%env(resolve:OAUTH_ENCRYPTION_KEY)%'
+
+        # Claude's custom connector uses authorization code + PKCE and holds no
+        # usable client secret, so every other grant stays off.
+        enable_auth_code_grant: true
+        enable_refresh_token_grant: true
+        require_code_challenge_for_public_clients: true
+        enable_client_credentials_grant: false
+        enable_password_grant: false
+        enable_implicit_grant: false
+    resource_server:
+        public_key: '%env(resolve:OAUTH_PUBLIC_KEY)%'
+    client:
+        # Carries the owning user, so connectors can be created and revoked
+        # from the account page.
+        classname: App\Entity\OAuthClient
+        # Client secrets go through the password hasher. The bundle still
+        # defaults to plaintext for BC and deprecates it; existing secrets are
+        # migrated with league:oauth2-server:rehash-client-secrets.
+        allow_plaintext_secrets: false
+    scopes:
+        available: ['bring']
+        default: ['bring']
+    persistence:
+        doctrine: null
+
+when@test:
+    league_oauth2_server:
+        persistence:
+            in_memory: null

@@ -1,4 +1,18 @@
-.env
+# Docker env for the MCP server. Anchored, so app/.env — a committed
+# Symfony defaults file — is not swept up with it.
+/.env
+/.idea
+
 .venv/
 __pycache__/
 *.pyc
+
+CLAUDE.md
+
+# Real deployment secrets live beside the compose file on the server.
+/deploy/.env
+
+# Legal documents are operator-specific; only the note explaining the
+# directory belongs in the repository.
+/legal/*
+!/legal/README.md

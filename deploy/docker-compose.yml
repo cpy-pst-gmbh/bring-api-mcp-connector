@@ -1,35 +1,41 @@
+# Production stack. Everything the server needs is this file and a .env beside
+# it — no source checkout, no build step.
+#
+#   docker compose pull && docker compose up -d
+#
+# Images come from the GitHub Actions build. Pin IMAGE_TAG to a sha-<commit>
+# tag rather than tracking `latest`, so both halves always move together and a
+# restart cannot silently pick up a different version.
+
 services:
   app:
-    build: ./app
-    # image: ghcr.io/YOUR-USER/bring-api-mcp-connector/app:latest
+    image: ghcr.io/cpy-pst-gmbh/bring-api-mcp-connector/app:${IMAGE_TAG:-latest}
     container_name: bring-app
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      # Bound to the loopback: the reverse proxy is the only thing that should
+      # reach it, and this keeps the port off the public interface.
+      - "127.0.0.1:8000:8000"
     environment:
       APP_SECRET: "${APP_SECRET}"
-      # Out of var/, which is not a volume — see the Dockerfile.
-      DATABASE_URL: "sqlite:///%kernel.project_dir%/data/bring.db"
       # Encrypts the stored Bring! passwords. Losing it makes every stored
       # password unreadable — back it up with the database.
       BRING_CREDENTIALS_KEY: "${BRING_CREDENTIALS_KEY}"
       OAUTH_PASSPHRASE: "${OAUTH_PASSPHRASE}"
       OAUTH_ENCRYPTION_KEY: "${OAUTH_ENCRYPTION_KEY}"
+      DATABASE_URL: "sqlite:///%kernel.project_dir%/data/bring.db"
       # Without this the app believes it is reached at http://…:8000 and puts
       # that into the discovery documents and the login links.
       TRUSTED_PROXIES: "${TRUSTED_PROXIES:-172.16.0.0/12}"
-      # Shown on the account page so users can paste it into Claude.
       DEFAULT_URI: "${BASE_URL}"
-      MCP_ENDPOINT: "${BASE_URL}/mcp"
-      # /health talks to the MCP container directly, not back through the proxy.
+      MCP_ENDPOINT: "${MCP_BASE_URL}/mcp"
       MCP_HEALTH_URL: "http://bring-mcp:8080/.well-known/oauth-protected-resource/mcp"
-      MAILER_DSN: "${MAILER_DSN:-null://null}"
-      MAIL_FROM: "${MAIL_FROM:-no-reply@localhost}"
+      MAILER_DSN: "${MAILER_DSN}"
+      MAIL_FROM: "${MAIL_FROM}"
       PRIVACY_POLICY_URL: "${PRIVACY_POLICY_URL:-}"
       IMPRINT_URL: "${IMPRINT_URL:-}"
       MAIL_SIGNATURE: "${MAIL_SIGNATURE:-}"
     volumes:
-      # The SQLite database and the OAuth keypair must outlive the container.
       - app-data:/app/data
       - app-jwt:/app/config/jwt
       # Markdown for the privacy policy and the imprint, when they are kept
@@ -46,26 +52,20 @@ services:
       - no-new-privileges:true
 
   bring-mcp:
-    build: ./mcp
-    # image: ghcr.io/YOUR-USER/bring-api-mcp-connector/mcp:latest
+    image: ghcr.io/cpy-pst-gmbh/bring-api-mcp-connector/mcp:${IMAGE_TAG:-latest}
     container_name: bring-mcp
     restart: unless-stopped
     depends_on:
       - app
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
-      # Public HTTPS address of this server, without a trailing slash
       BASE_URL: "${MCP_BASE_URL}"
-      # Public HTTPS address of the Symfony authorization server — this is what
-      # the protected-resource metadata advertises to Claude.
+      # What the protected-resource metadata advertises to Claude.
       AUTH_SERVER_URL: "${BASE_URL}"
-      # Server-to-server calls (JWKS, credentials) take the compose network
-      # instead of leaving through the reverse proxy and coming back.
+      # Server-to-server calls take the compose network instead of leaving
+      # through the reverse proxy and coming back.
       AUTH_SERVER_INTERNAL_URL: "http://app:8000"
-      # Optional: pin the token audience to one client identifier. Empty
-      # when users create their own connectors, which is the normal case.
-      OAUTH_AUDIENCE: "${OAUTH_AUDIENCE:-}"
       CREDENTIALS_CACHE_TTL: "${CREDENTIALS_CACHE_TTL:-900}"
       LOG_LEVEL: "INFO"
     cap_drop:
@@ -78,7 +78,7 @@ services:
   # something calls the command, and a host crontab is a step an operator can
   # forget — this ships with the stack instead.
   cron:
-    build: ./app
+    image: ghcr.io/cpy-pst-gmbh/bring-api-mcp-connector/app:${IMAGE_TAG:-latest}
     container_name: bring-cron
     restart: unless-stopped
     depends_on:
@@ -100,8 +100,8 @@ services:
       # No request to take the host from out here, so URLs in the notice email
       # would come out as localhost without this.
       DEFAULT_URI: "${BASE_URL}"
-      MAILER_DSN: "${MAILER_DSN:-null://null}"
-      MAIL_FROM: "${MAIL_FROM:-no-reply@localhost}"
+      MAILER_DSN: "${MAILER_DSN}"
+      MAIL_FROM: "${MAIL_FROM}"
       MAIL_SIGNATURE: "${MAIL_SIGNATURE:-}"
       # Hour of the day, UTC, at which the run starts.
       MAINTENANCE_HOUR: "${MAINTENANCE_HOUR:-4}"
