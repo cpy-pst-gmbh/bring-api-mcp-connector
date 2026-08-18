@@ -54,60 +54,110 @@ Claude ──► https://bring.example.de/authorize   (sign in, consent)
 Without an explicit list, tools write to the list chosen for that connector,
 falling back to the account's first one.
 
-## Setup
+## Deploying
 
-### 1. Configure
+The server needs two files and nothing else — no checkout, no build step. Both
+images are public, so no registry login either.
+
+### 1. Put the stack somewhere
+
+Copy `deploy/docker-compose.yml` and `deploy/.env.example` from this repository
+into a directory on the server, for example `/opt/bring-connector`, then:
 
 ```bash
 cp .env.example .env
 ```
 
-Generate the secrets it asks for:
+### 2. Fill in the secrets
 
 ```bash
-docker compose run --rm app php bin/console app:credentials:generate-key
+docker run --rm --entrypoint php ghcr.io/cpy-pst-gmbh/bring-api-mcp-connector/app:latest bin/console app:credentials:generate-key
 ```
+
+`--entrypoint php` skips the startup checks — one of them refuses to run
+without the very key this command produces.
 
 `APP_SECRET`, `OAUTH_PASSPHRASE` and `OAUTH_ENCRYPTION_KEY` are any random
-strings — `openssl rand -hex 16` does. The OAuth signing keypair is generated on
-first start into a volume; nothing to do by hand.
+strings, `openssl rand -hex 16` each. `BASE_URL` and `MCP_BASE_URL` are the two
+public HTTPS addresses.
 
-### 2. Run both containers
+Set `MAILER_DSN` to a real transport. The sign-in link is the only way back in
+when Bring! is unreachable or someone changed their password there, and
+`null://null` discards it silently.
+
+Pin `IMAGE_TAG` to a released tag rather than `latest`, so both halves always
+move together and a restart cannot pick up a different version.
+
+### 3. Start it
 
 ```bash
-docker compose up -d --build
+docker compose pull && docker compose up -d
 ```
 
-The Symfony app listens on 8000, the MCP server on 8080. Both need a reverse
-proxy with a valid certificate in front of them, mapping `BASE_URL` and
-`MCP_BASE_URL` to those ports.
+The first start generates the OAuth keypair into a volume and applies the
+migrations. Both containers publish to `127.0.0.1` only, so the reverse proxy
+is the sole way in:
 
-Two things the proxy has to get right:
+```bash
+curl -s localhost:8000/health.json
+```
 
-- **Block `/internal` on the app's vhost.** It hands out decrypted Bring!
-  passwords to whoever holds a valid token. The MCP container reaches it over
-  the compose network and does not need it published.
+### 4. Point the proxy at them
+
+`deploy/apache-vhosts.conf.example` holds both vhosts. Two things they have to
+get right:
+
+- **`ProxyPass /internal !` on the app vhost.** That endpoint hands decrypted
+  Bring! passwords to whoever holds a valid token. The MCP container reaches it
+  over the compose network and needs no public route.
 - **`flushpackets=on` for `/mcp`**, otherwise the proxy buffers the open
-  Streamable HTTP connection.
+  Streamable HTTP connection and Claude waits for a response that never
+  arrives in one piece. `mod_deflate` buffers for the same reason, so `/mcp`
+  is excluded from compression as well.
+- **`RequestHeader set X-Forwarded-Proto "https"`.** `mod_proxy_http` forwards
+  `X-Forwarded-For` and `-Host` but not `-Proto`, and without it Symfony writes
+  `http://` into the discovery documents and the sign-in links.
 
-```apache
-# On the app vhost
-ProxyPass /internal !
-ProxyPass / http://127.0.0.1:8000/
-ProxyPassReverse / http://127.0.0.1:8000/
+The MCP server takes no notice of forwarded headers at all — its metadata comes
+straight from `BASE_URL` and `AUTH_SERVER_URL`, so those have to carry the
+public addresses.
+
+Both hostnames need real certificates — Anthropic calls the MCP endpoint from
+their own infrastructure and will not accept plain HTTP.
+
+### 5. Check it end to end
+
+Open `BASE_URL`, sign in with a Bring! account, create a connector, and put the
+endpoint and client ID into Claude as described below. `/health` should stay
+green throughout.
+
+### Updating
+
+```bash
+docker compose pull && docker compose up -d
 ```
 
-State lives in two named volumes: `app-data` (the SQLite database) and
-`app-jwt` (the OAuth keypair). Both must survive container replacement — a new
-keypair invalidates every token Claude still holds.
+Migrations run on start. The database and the keypair live in the `app-data`
+and `app-jwt` volumes and survive the replacement — a new keypair would
+invalidate every token Claude still holds.
 
-### 3. Add it to Claude
+### Backing up
 
-Sign in at `<BASE_URL>`, create a connector on `/account`, then in Claude:
-Settings → Connectors → *Add Custom Connector* → `<MCP_BASE_URL>/mcp`, and
-enter the client ID under Advanced Settings. Claude discovers the authorization
-server from the MCP server's metadata, sends the user to Symfony to sign in,
-and lands on the consent screen.
+```bash
+docker compose exec app php -r "(new PDO('sqlite:/app/data/app.db'))->exec(\"VACUUM INTO '/app/data/backup.db'\");"
+```
+
+`VACUUM INTO` takes a consistent copy while the app keeps running; copying the
+file out from under WAL does not. Save `app-jwt` and `BRING_CREDENTIALS_KEY`
+alongside it — without the key the stored passwords are unreadable.
+
+### Adding it to Claude
+
+Sign in at `<BASE_URL>`, create a connector, then in Claude: Settings →
+Connectors → *Add Custom Connector* → `<MCP_BASE_URL>/mcp`, and enter the
+client ID under Advanced Settings. Claude discovers the authorization server
+from the MCP server's metadata, sends the user to Symfony to sign in, and lands
+on the consent screen.
 
 Clients created from the console have no owner and stay invisible in the web
 UI — useful for an MCP Inspector client:

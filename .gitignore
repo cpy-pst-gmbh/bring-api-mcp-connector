@@ -8,3 +8,6 @@ __pycache__/
 *.pyc
 
 CLAUDE.md
+
+# Real deployment secrets live beside the compose file on the server.
+/deploy/.env

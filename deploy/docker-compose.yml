@@ -1,0 +1,73 @@
+# Production stack. Everything the server needs is this file and a .env beside
+# it — no source checkout, no build step.
+#
+#   docker compose pull && docker compose up -d
+#
+# Images come from the GitHub Actions build. Pin IMAGE_TAG to a sha-<commit>
+# tag rather than tracking `latest`, so both halves always move together and a
+# restart cannot silently pick up a different version.
+
+services:
+  app:
+    image: ghcr.io/cpy-pst-gmbh/bring-api-mcp-connector/app:${IMAGE_TAG:-latest}
+    container_name: bring-app
+    restart: unless-stopped
+    ports:
+      # Bound to the loopback: the reverse proxy is the only thing that should
+      # reach it, and this keeps the port off the public interface.
+      - "127.0.0.1:8000:8000"
+    environment:
+      APP_SECRET: "${APP_SECRET}"
+      # Encrypts the stored Bring! passwords. Losing it makes every stored
+      # password unreadable — back it up with the database.
+      BRING_CREDENTIALS_KEY: "${BRING_CREDENTIALS_KEY}"
+      OAUTH_PASSPHRASE: "${OAUTH_PASSPHRASE}"
+      OAUTH_ENCRYPTION_KEY: "${OAUTH_ENCRYPTION_KEY}"
+      DATABASE_URL: "sqlite:///%kernel.project_dir%/data/app.db"
+      # Without this the app believes it is reached at http://…:8000 and puts
+      # that into the discovery documents and the login links.
+      TRUSTED_PROXIES: "${TRUSTED_PROXIES:-172.16.0.0/12}"
+      MCP_ENDPOINT: "${MCP_BASE_URL}/mcp"
+      MCP_HEALTH_URL: "http://bring-mcp:8080/.well-known/oauth-protected-resource/mcp"
+      MAILER_DSN: "${MAILER_DSN}"
+      MAIL_FROM: "${MAIL_FROM}"
+      PRIVACY_POLICY_URL: "${PRIVACY_POLICY_URL:-}"
+      IMPRINT_URL: "${IMPRINT_URL:-}"
+    volumes:
+      - app-data:/app/data
+      - app-jwt:/app/config/jwt
+    cap_drop:
+      - ALL
+    cap_add:
+      # Not used — it listens on 8000 — but the frankenphp binary carries this
+      # capability, and a file with capabilities outside the bounding set
+      # cannot be executed at all.
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+
+  bring-mcp:
+    image: ghcr.io/cpy-pst-gmbh/bring-api-mcp-connector/mcp:${IMAGE_TAG:-latest}
+    container_name: bring-mcp
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      BASE_URL: "${MCP_BASE_URL}"
+      # What the protected-resource metadata advertises to Claude.
+      AUTH_SERVER_URL: "${BASE_URL}"
+      # Server-to-server calls take the compose network instead of leaving
+      # through the reverse proxy and coming back.
+      AUTH_SERVER_INTERNAL_URL: "http://app:8000"
+      CREDENTIALS_CACHE_TTL: "${CREDENTIALS_CACHE_TTL:-900}"
+      LOG_LEVEL: "INFO"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  app-data:
+  app-jwt:

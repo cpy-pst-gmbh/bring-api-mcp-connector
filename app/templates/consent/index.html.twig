@@ -25,7 +25,11 @@
                 {{ 'consent.scopes'|trans({'%count%': scopes|length, '%scopes%': scopes|join(', ')}) }}
             </p>
 
-            <form method="post" class="mt-6 flex gap-3">
+            {# Both decisions redirect to claude.ai. Turbo would submit this with
+               fetch(), and a fetch cannot follow a redirect to another origin —
+               the browser blocks it as a CORS failure and the connector never
+               receives its code. A plain form submission navigates instead. #}
+            <form method="post" data-turbo="false" class="mt-6 flex gap-3">
                 <input type="hidden" name="_token" value="{{ csrf_token('consent') }}">
                 <button type="submit" name="decision" value="approve"
                         class="flex-1 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2">

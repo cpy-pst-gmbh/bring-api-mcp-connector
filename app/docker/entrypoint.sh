@@ -10,7 +10,8 @@ cd /app
 
 if [ -z "${BRING_CREDENTIALS_KEY:-}" ]; then
     echo "BRING_CREDENTIALS_KEY is not set. Generate one with:" >&2
-    echo "  docker compose run --rm app php bin/console app:credentials:generate-key" >&2
+    echo "  docker compose run --rm --entrypoint php app bin/console app:credentials:generate-key" >&2
+    # --entrypoint php, or this very check refuses the command that fixes it.
     exit 1
 fi
 
