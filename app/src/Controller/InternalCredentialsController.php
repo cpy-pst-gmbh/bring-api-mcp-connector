@@ -78,6 +78,6 @@ final class InternalCredentialsController extends AbstractController
             return null;
         }
 
-        return $client->getDefaultListName();
+        return $client->defaultListName;
     }
 }

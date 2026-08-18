@@ -9,6 +9,8 @@ use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use League\Bundle\OAuth2ServerBundle\Model\AbstractClient;
 
+use function trim;
+
 /**
  * An OAuth client, extended with the user it belongs to.
  *
@@ -17,14 +19,15 @@ use League\Bundle\OAuth2ServerBundle\Model\AbstractClient;
  * Pointing that option here means this class owns the mapping instead, so the
  * identifier has to be declared locally — the superclass mapping omits it.
  *
- * Table name stays `oauth2_client`: the bundle's token entities join to it, and
- * this is still the bundle's table, only with two columns added.
+ * Owning the mapping is also what allows the `app_` prefix: the bundle's token
+ * entities resolve their `client` association to this class, so they follow the
+ * table wherever it is named.
  *
  * `user` is nullable so clients created from the console — the shared connector,
  * an MCP Inspector client — keep working without an owner.
  */
 #[ORM\Entity(repositoryClass: OAuthClientRepository::class)]
-#[ORM\Table(name: 'oauth2_client')]
+#[ORM\Table(name: 'app_oauth_client')]
 class OAuthClient extends AbstractClient
 {
     #[ORM\Id]
@@ -33,17 +36,31 @@ class OAuthClient extends AbstractClient
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true, onDelete: 'CASCADE')]
-    private ?User $user = null;
+    public ?User $user = null;
 
+    /**
+     * Set once, in the constructor. `private(set)` says so in the language
+     * rather than in a comment about the missing setter.
+     */
     #[ORM\Column(type: 'datetime_immutable')]
-    private DateTimeImmutable $createdAt;
+    public private(set) DateTimeImmutable $createdAt;
 
     /**
      * Which list this connector writes to when a tool call names none.
      * Null falls back to the first list of the account.
      */
     #[ORM\Column(length: 120, nullable: true)]
-    private ?string $defaultListName = null;
+    public ?string $defaultListName = null {
+        // A form submits an empty field rather than nothing at all, and an
+        // empty default means the same as no default. Normalising in the hook
+        // puts that rule where the value is, instead of in every caller — and
+        // Doctrine writes the backing store directly when hydrating, so a row
+        // read back from the database does not run it again.
+        set (?string $value) {
+            $value = null === $value ? null : trim($value);
+            $this->defaultListName = '' === $value ? null : $value;
+        }
+    }
 
     /**
      * Signature is fixed by the bundle: CreateClientCommand and the client
@@ -54,36 +71,6 @@ class OAuthClient extends AbstractClient
         parent::__construct($name, $identifier, $secret);
 
         $this->createdAt = new DateTimeImmutable();
-    }
-
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function getDefaultListName(): ?string
-    {
-        return $this->defaultListName;
-    }
-
-    public function setDefaultListName(?string $name): self
-    {
-        $name = null === $name ? null : trim($name);
-        $this->defaultListName = '' === $name ? null : $name;
-
-        return $this;
     }
 
     public function belongsTo(User $user): bool

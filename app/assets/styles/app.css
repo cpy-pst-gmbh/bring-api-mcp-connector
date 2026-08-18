@@ -33,3 +33,109 @@
         }
     }
 }
+
+@layer components {
+    /* Markdown arrives as plain tags with no classes to hang utilities on, so
+       the prose is styled here. Tailwind's typography plugin would be the
+       usual answer, but it needs npm and this project builds the CSS with the
+       standalone binary. */
+    .legal {
+        color: var(--color-slate-700);
+        line-height: 1.7;
+    }
+
+    .legal > :first-child {
+        margin-top: 0;
+    }
+
+    .legal > :last-child {
+        margin-bottom: 0;
+    }
+
+    .legal h1,
+    .legal h2,
+    .legal h3 {
+        color: var(--color-slate-900);
+        font-weight: 600;
+        letter-spacing: -0.015em;
+    }
+
+    .legal h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .legal h2 {
+        font-size: 1.125rem;
+        margin-top: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .legal h3 {
+        font-size: 1rem;
+        margin-top: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .legal p,
+    .legal ul,
+    .legal ol,
+    .legal blockquote,
+    .legal table {
+        margin-block: 0.75rem;
+    }
+
+    .legal ul,
+    .legal ol {
+        padding-left: 1.25rem;
+    }
+
+    .legal ul {
+        list-style: disc;
+    }
+
+    .legal ol {
+        list-style: decimal;
+    }
+
+    .legal li {
+        margin-block: 0.25rem;
+    }
+
+    .legal a {
+        color: var(--color-slate-900);
+        text-decoration: underline;
+        text-underline-offset: 4px;
+    }
+
+    .legal blockquote {
+        border-left: 2px solid var(--color-slate-200);
+        padding-left: 1rem;
+        color: var(--color-slate-500);
+    }
+
+    .legal code {
+        background: var(--color-slate-100);
+        border-radius: 0.25rem;
+        padding: 0.1rem 0.3rem;
+        font-size: 0.875em;
+    }
+
+    .legal table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+
+    .legal th,
+    .legal td {
+        border: 1px solid var(--color-slate-200);
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+    }
+
+    .legal hr {
+        border-color: var(--color-slate-200);
+        margin-block: 2rem;
+    }
+}

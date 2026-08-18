@@ -147,10 +147,17 @@ Migrations run on start. The database and the keypair live in the `app-data`
 and `app-jwt` volumes and survive the replacement — a new keypair would
 invalidate every token Claude still holds.
 
+The database file is `bring.db`. An installation that predates that name keeps
+its `app.db` sitting in the volume, unused: the app creates an empty `bring.db`
+beside it and starts from there. Accounts are recreated on the next sign-in,
+because signing in is what creates them — but existing connectors are not, and
+have to be added again in Claude. Delete the old file once you are satisfied
+nothing is missing.
+
 ### Backing up
 
 ```bash
-docker compose exec app php -r "(new PDO('sqlite:/app/data/app.db'))->exec(\"VACUUM INTO '/app/data/backup.db'\");"
+docker compose exec app php -r "(new PDO('sqlite:/app/data/bring.db'))->exec(\"VACUUM INTO '/app/data/backup.db'\");"
 ```
 
 `VACUUM INTO` takes a consistent copy while the app keeps running; copying the
@@ -172,6 +179,43 @@ UI — useful for an MCP Inspector client:
 docker compose exec app php bin/console league:oauth2-server:create-client --public --redirect-uri="https://claude.ai/api/mcp/auth_callback" --grant-type=authorization_code --grant-type=refresh_token --scope=bring "Claude" claude-connector
 ```
 
+## Legal texts and the mail signature
+
+`PRIVACY_POLICY_URL` and `IMPRINT_URL` each take one of two things:
+
+| Value | What happens |
+| --- | --- |
+| `https://example.com/privacy` | the footer links straight there |
+| `legal/privacy.md` | the Markdown is rendered and served from `/privacy` |
+| empty | no link at all |
+
+Anything starting with `http://` or `https://` is treated as an address
+elsewhere; everything else is a path, read relative to the application
+directory. The two routes exist either way and answer 404 while the matching
+variable names something else, so a typo shows up as a missing page rather than
+a missing feature.
+
+The `legal/` directory next to `docker-compose.yml` is mounted read-only into
+the container, which is where `legal/privacy.md` resolves. Documents are
+GitHub-flavoured Markdown — tables and autolinks included — and are re-read when
+the file changes, with no restart and no cache to clear.
+
+`MAIL_SIGNATURE` takes a path in the same way and appends the rendered Markdown
+to the end of every outgoing email, separated by a rule. It is attached in the
+mailer rather than in a shared email template, so a message added later cannot
+go out unsigned by forgetting to extend something.
+
+A file any of the three name but cannot be read fails the `documents` check on
+`/health`, naming the variable. Nothing else would say so: the footer link is
+simply left out, and the email simply goes unsigned.
+
+`docs/privacy-policy.skeleton.md` inventories what this application actually
+stores and who else receives it, as a starting point. It is not legal advice
+and not a finished document.
+
+Running from a checkout rather than the container, paths are relative to
+`app/`, so the same directory is `../legal/privacy.md`.
+
 ## Monitoring
 
 `/health` reports the database (including write access), the MCP server, the
@@ -188,6 +232,49 @@ an uptime check can watch the status code and ignore the body.
 Reasons are deliberately terse — the full message goes to the log, because this
 endpoint needs no authentication. Set `MCP_HEALTH_URL` to reach the MCP
 container directly; otherwise it is derived from `MCP_ENDPOINT`.
+
+## Dormant accounts
+
+An account holds a Bring! password. An abandoned one is a stored secret nobody
+is watching, so it does not stay forever:
+
+| Silence | What happens |
+| --- | --- |
+| 11 months | an email says the account will be deleted in a month |
+| 12 months | the account, the stored password and every connector are deleted |
+
+Silence means no sign-in **and** no connector activity — the MCP server fetches
+credentials on every call, and each one counts as use. Signing in once resets
+the clock and withdraws an outstanding notice.
+
+Both halves are one command, on purpose: nothing is deleted that was not warned
+a month earlier, and running the warning without the deletion — or the other way
+round — would break that promise.
+
+The `cron` service in the compose file runs it. It is the same image as the
+app with the entrypoint replaced by a loop that wakes once a day, prunes
+accounts and clears expired OAuth tokens. Nothing to add to the host crontab,
+and no `docker` permissions to hand to a cron user. `MAINTENANCE_HOUR` moves
+the slot, whole hours UTC, default 4.
+
+```bash
+docker compose logs cron
+```
+
+The log names the time of the next run. To see what a run would do without
+doing it:
+
+```bash
+docker compose exec cron php bin/console app:accounts:prune-inactive --dry-run
+```
+
+The cron container deliberately does not migrate — the app container does that
+on start, and two processes migrating one SQLite file at once is a race.
+
+A notice is only recorded as sent once the mail transport accepted it. With a
+broken `MAILER_DSN` the account comes up again on the next run rather than
+being deleted over a warning nobody received, so no account is ever removed
+without notice — including on an instance where this command had never run.
 
 ## Security notes
 

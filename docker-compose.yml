@@ -9,7 +9,7 @@ services:
     environment:
       APP_SECRET: "${APP_SECRET}"
       # Out of var/, which is not a volume — see the Dockerfile.
-      DATABASE_URL: "sqlite:///%kernel.project_dir%/data/app.db"
+      DATABASE_URL: "sqlite:///%kernel.project_dir%/data/bring.db"
       # Encrypts the stored Bring! passwords. Losing it makes every stored
       # password unreadable — back it up with the database.
       BRING_CREDENTIALS_KEY: "${BRING_CREDENTIALS_KEY}"
@@ -19,6 +19,7 @@ services:
       # that into the discovery documents and the login links.
       TRUSTED_PROXIES: "${TRUSTED_PROXIES:-172.16.0.0/12}"
       # Shown on the account page so users can paste it into Claude.
+      DEFAULT_URI: "${BASE_URL}"
       MCP_ENDPOINT: "${BASE_URL}/mcp"
       # /health talks to the MCP container directly, not back through the proxy.
       MCP_HEALTH_URL: "http://bring-mcp:8080/.well-known/oauth-protected-resource/mcp"
@@ -26,10 +27,14 @@ services:
       MAIL_FROM: "${MAIL_FROM:-no-reply@localhost}"
       PRIVACY_POLICY_URL: "${PRIVACY_POLICY_URL:-}"
       IMPRINT_URL: "${IMPRINT_URL:-}"
+      MAIL_SIGNATURE: "${MAIL_SIGNATURE:-}"
     volumes:
       # The SQLite database and the OAuth keypair must outlive the container.
       - app-data:/app/data
       - app-jwt:/app/config/jwt
+      # Markdown for the privacy policy and the imprint, when they are kept
+      # here rather than linked elsewhere. Read-only: the app never writes it.
+      - ./legal:/app/legal:ro
     cap_drop:
       - ALL
     cap_add:
@@ -63,6 +68,51 @@ services:
       OAUTH_AUDIENCE: "${OAUTH_AUDIENCE:-}"
       CREDENTIALS_CACHE_TTL: "${CREDENTIALS_CACHE_TTL:-900}"
       LOG_LEVEL: "INFO"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # Same image as the app, second role: nothing is served, a loop runs the
+  # daily maintenance. Warning and deleting dormant accounts only happens if
+  # something calls the command, and a host crontab is a step an operator can
+  # forget — this ships with the stack instead.
+  cron:
+    build: ./app
+    container_name: bring-cron
+    restart: unless-stopped
+    depends_on:
+      - app
+    # Straight to the loop: the normal entrypoint migrates, and two containers
+    # migrating one SQLite file at once is a race.
+    entrypoint: ["maintenance"]
+    # The base image checks Caddy's admin endpoint, which this role does not
+    # run — it would report unhealthy forever. If the loop dies the container
+    # exits and the restart policy takes over, so there is nothing to poll.
+    healthcheck:
+      disable: true
+    environment:
+      APP_SECRET: "${APP_SECRET}"
+      BRING_CREDENTIALS_KEY: "${BRING_CREDENTIALS_KEY}"
+      OAUTH_PASSPHRASE: "${OAUTH_PASSPHRASE}"
+      OAUTH_ENCRYPTION_KEY: "${OAUTH_ENCRYPTION_KEY}"
+      DATABASE_URL: "sqlite:///%kernel.project_dir%/data/bring.db"
+      # No request to take the host from out here, so URLs in the notice email
+      # would come out as localhost without this.
+      DEFAULT_URI: "${BASE_URL}"
+      MAILER_DSN: "${MAILER_DSN:-null://null}"
+      MAIL_FROM: "${MAIL_FROM:-no-reply@localhost}"
+      MAIL_SIGNATURE: "${MAIL_SIGNATURE:-}"
+      # Hour of the day, UTC, at which the run starts.
+      MAINTENANCE_HOUR: "${MAINTENANCE_HOUR:-4}"
+    volumes:
+      - app-data:/app/data
+      # Read by the OAuth bundle when the container boots, even though this
+      # role never signs a token.
+      - app-jwt:/app/config/jwt
+      # The notice email is sent from here, so the signature has to be
+      # readable from here too.
+      - ./legal:/app/legal:ro
     cap_drop:
       - ALL
     security_opt:

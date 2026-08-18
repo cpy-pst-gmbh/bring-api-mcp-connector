@@ -62,11 +62,11 @@ final class BringLoginAuthenticator extends AbstractLoginFormAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-        $email = trim((string) $request->request->get('_username', ''));
-        $password = (string) $request->request->get('_password', '');
-        $csrfToken = (string) $request->request->get('_csrf_token', '');
+        $email = trim($request->request->getString('_username'));
+        $password = $request->request->getString('_password');
+        $csrfToken = $request->request->getString('_csrf_token');
 
-        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken('authenticate', $csrfToken))) {
+        if (false === $this->csrfTokenManager->isTokenValid(new CsrfToken('authenticate', $csrfToken))) {
             throw new CustomUserMessageAuthenticationException('login.error.invalid_csrf');
         }
 
@@ -82,8 +82,7 @@ final class BringLoginAuthenticator extends AbstractLoginFormAuthenticator
             // password, which happens in the credentials check below.
             new UserBadge(
                 $email,
-                fn (string $identifier): User => $this->users->findOneByEmail($identifier)
-                    ?? (new User())->setEmail($identifier),
+                fn (string $identifier): User => $this->users->findOneByEmail($identifier) ?? new User()->setEmail($identifier),
             ),
             new CustomCredentials(
                 fn (string $attempt, User $user): bool => $this->verify($user, $attempt),
@@ -178,9 +177,12 @@ final class BringLoginAuthenticator extends AbstractLoginFormAuthenticator
         $credential->setPlainPassword($password);
         $credential->touch();
 
-        $this->logger->info('Bring! password changed for {email}, stored copy refreshed.', [
-            'email' => $user->getEmail(),
-        ]);
+        $this->logger->info(
+            'Bring! password changed for {email}, stored copy refreshed.',
+            [
+                'email' => $user->getEmail(),
+            ],
+        );
     }
 
     /**

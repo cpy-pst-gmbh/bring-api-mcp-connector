@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ title|trans }}{% endblock %}
+
+{% block body %}
+    {# The document brings its own headings. Wrapping it in the same card as
+       everything else keeps it part of the site rather than a bare page. #}
+    <article class="legal rounded-xl border border-slate-200 bg-white p-8 shadow-xs">
+        {{ content|raw }}
+    </article>
+{% endblock %}

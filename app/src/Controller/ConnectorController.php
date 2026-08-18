@@ -67,8 +67,8 @@ final class ConnectorController extends AbstractController
         $label = '' === $label ? 'Claude' : mb_substr($label, 0, 60);
 
         $client = new OAuthClient($label, self::generateIdentifier(), null);
-        $client->setUser($user);
-        $client->setDefaultListName($this->resolveDefaultList($request, $user));
+        $client->user = $user;
+        $client->defaultListName = $this->resolveDefaultList($request, $user);
         $client->setActive(true);
         $client->setRedirectUris(new RedirectUri($this->redirectUri));
         $client->setGrants(new Grant('authorization_code'), new Grant('refresh_token'));

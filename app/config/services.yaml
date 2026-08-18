@@ -35,6 +35,8 @@ parameters:
     # going back out through the proxy.
     app.mcp_health_url: '%env(string:default:app.empty_string:MCP_HEALTH_URL)%'
     # Footer links. Empty means the link is left out entirely.
+    # Markdown appended to every outgoing email. Empty sends them unsigned.
+    app.mail_signature: '%env(string:default:app.empty_string:MAIL_SIGNATURE)%'
     app.privacy_policy_url: '%env(string:default:app.empty_string:PRIVACY_POLICY_URL)%'
     app.imprint_url: '%env(string:default:app.empty_string:IMPRINT_URL)%'
 

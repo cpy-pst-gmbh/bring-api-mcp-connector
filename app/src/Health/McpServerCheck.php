@@ -27,10 +27,8 @@ final readonly class McpServerCheck implements HealthCheckInterface
     public function __construct(
         private HttpClientInterface $httpClient,
         private LoggerInterface $logger,
-        #[Autowire('%app.mcp_health_url%')]
-        private string $healthUrl,
-        #[Autowire('%app.mcp_endpoint%')]
-        private string $mcpEndpoint,
+        #[Autowire('%app.mcp_health_url%')] private string $healthUrl,
+        #[Autowire('%app.mcp_endpoint%')] private string $mcpEndpoint,
     ) {
     }
 
@@ -64,14 +62,17 @@ final readonly class McpServerCheck implements HealthCheckInterface
         } catch (HttpExceptionInterface $exception) {
             // The message names the internal URL, which this public endpoint
             // has no business publishing.
-            $this->logger->error('MCP health check failed: {message}', [
-                'message' => $exception->getMessage(),
-            ]);
+            $this->logger->error(
+                'MCP health check failed: {message}',
+                [
+                    'message' => $exception->getMessage(),
+                ],
+            );
 
             return HealthResult::failed('health.detail.mcp_unreachable');
         }
 
-        if (!isset($payload['resource'])) {
+        if (false === isset($payload['resource'])) {
             return HealthResult::failed('health.detail.mcp_malformed');
         }
 

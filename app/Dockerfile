@@ -68,8 +68,10 @@ ENV XDG_CONFIG_HOME=/config \
 
 COPY --from=build --chown=www-data:www-data /app /app
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint
+# Same image, second role: the cron service overrides the entrypoint with this.
+COPY docker/maintenance.sh /usr/local/bin/maintenance
 
-RUN chmod +x /usr/local/bin/entrypoint \
+RUN chmod +x /usr/local/bin/entrypoint /usr/local/bin/maintenance \
     && mkdir -p var data config/jwt /data/caddy /config/caddy \
     && chown -R www-data:www-data var data config/jwt /data /config
 

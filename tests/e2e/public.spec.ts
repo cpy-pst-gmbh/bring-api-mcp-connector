@@ -191,6 +191,7 @@ test.describe('health', () => {
         expect(Object.keys(body.checks).sort()).toEqual([
             'credential_cipher',
             'database',
+            'documents',
             'mcp_server',
             'oauth_keypair',
         ]);
@@ -206,6 +207,38 @@ test.describe('health', () => {
             const response = await request.get(path);
             expect(response.headers()['set-cookie'], `${path} set a cookie`).toBeUndefined();
         }
+    });
+});
+
+test.describe('legal documents', () => {
+    // The containers under test are configured with local Markdown for both,
+    // which is the half that needs proving — an external URL is just an href.
+    test('renders the Markdown as a page of the site', async ({ page }) => {
+        await page.goto('/privacy');
+
+        await expect(page.locator('article.legal h1')).toBeVisible();
+        // The card and the footer are there, so it is not a bare document.
+        await expect(page.locator('footer')).toBeVisible();
+    });
+
+    test('links both documents in the footer', async ({ page }) => {
+        await page.goto('/login');
+
+        await expect(page.locator('footer a[href="/privacy"]')).toBeVisible();
+        await expect(page.locator('footer a[href="/imprint"]')).toBeVisible();
+    });
+
+    test('needs no session', async ({ page }) => {
+        const response = await page.goto('/imprint');
+
+        expect(response!.status()).toBe(200);
+        expect(await page.context().cookies()).toEqual([]);
+    });
+
+    test('renders GitHub-flavoured tables', async ({ page }) => {
+        await page.goto('/privacy');
+
+        await expect(page.locator('article.legal table th').first()).toBeVisible();
     });
 });
 

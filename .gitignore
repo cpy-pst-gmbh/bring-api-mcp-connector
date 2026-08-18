@@ -11,3 +11,8 @@ CLAUDE.md
 
 # Real deployment secrets live beside the compose file on the server.
 /deploy/.env
+
+# Legal documents are operator-specific; only the note explaining the
+# directory belongs in the repository.
+/legal/*
+!/legal/README.md

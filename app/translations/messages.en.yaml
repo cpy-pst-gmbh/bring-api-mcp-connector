@@ -30,6 +30,14 @@ email:
         action: 'Sign in'
         expiry: 'The link works once and expires %date% UTC.'
         ignore: 'If you did not ask for it, ignore this email — nothing happens until the link is opened.'
+    inactivity:
+        subject: 'Your account will be deleted in a month'
+        greeting: 'Hello,'
+        lead: 'This account has not been used since %date% — no sign-in, and no shopping list activity through a connector.'
+        deadline: 'Unless it is used again, it will be deleted on %date%.'
+        action: 'Sign in to keep the account'
+        keep: 'Keeping it is a matter of signing in once. Nothing else is needed, and this notice will not be sent again until another year of silence has passed.'
+        contents: 'Deleting the account removes the stored Bring! password and every connector along with it. Your Bring! account itself is untouched — it lives at Bring!, not here.'
 
 wizard:
     steps_label: 'Steps'
@@ -146,6 +154,7 @@ health:
         mcp_server: 'MCP server'
         oauth_keypair: 'OAuth keypair'
         credential_cipher: 'Credential encryption'
+        documents: 'Documents'
     detail:
         database_unreachable: 'Not reachable.'
         database_readonly: 'Readable but not writable.'
@@ -159,4 +168,6 @@ health:
         keypair_public_invalid: 'Public key is not a valid PEM.'
         keypair_not_rsa: 'Public key is not RSA, which the JWKS document assumes.'
         cipher_unusable: 'Key missing or unusable.'
+        documents_missing: 'Configured file cannot be read: %variables%.'
+        documents_none: 'no local documents configured'
         cipher_roundtrip: 'Encryption round-trip returned a different value.'

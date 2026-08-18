@@ -37,8 +37,9 @@ jobs:
           TRUSTED_PROXIES="172.16.0.0/12"
           MAILER_DSN="null://null"
           MAIL_FROM="no-reply@localhost"
-          PRIVACY_POLICY_URL=""
-          IMPRINT_URL=""
+          PRIVACY_POLICY_URL="legal/privacy.md"
+          IMPRINT_URL="legal/imprint.md"
+          MAIL_SIGNATURE="legal/signature.md"
           OAUTH_AUDIENCE=""
           CREDENTIALS_CACHE_TTL="900"
           EOF
@@ -47,6 +48,17 @@ jobs:
           else
             echo "::notice::BRING_TEST_EMAIL is not set — authenticated tests will be skipped."
           fi
+
+      # The real documents are operator-specific and stay out of the
+      # repository, so the suite gets stand-ins. They have to exist before the
+      # containers start: the directory is bind-mounted, and /health fails when
+      # a configured document cannot be read.
+      - name: Provide stand-in legal documents
+        run: |
+          mkdir -p legal
+          cp docs/privacy-policy.skeleton.md legal/privacy.md
+          printf '# Imprint\n\nTest operator, Test street 1, 12345 Test city\n' > legal/imprint.md
+          printf '**Test operator** - Test street 1 - 12345 Test city\n' > legal/signature.md
 
       - name: Build and start
         run: docker compose up -d --build

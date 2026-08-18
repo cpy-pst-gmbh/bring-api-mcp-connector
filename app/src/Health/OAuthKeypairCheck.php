@@ -37,7 +37,7 @@ final readonly class OAuthKeypairCheck implements HealthCheckInterface
 
     public function run(): HealthResult
     {
-        if (!is_readable($this->privateKeyPath)) {
+        if (false === is_readable($this->privateKeyPath)) {
             return HealthResult::failed('health.detail.keypair_private_missing');
         }
 

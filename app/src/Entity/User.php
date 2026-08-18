@@ -41,12 +41,30 @@ class User implements UserInterface
     #[ORM\Column(type: 'datetime_immutable')]
     private DateTimeImmutable $createdAt;
 
+    /**
+     * Last sign-in or connector call. Dormant accounts are warned and then
+     * removed, and this is the only thing that decides how dormant one is.
+     */
+    #[ORM\Column(type: 'datetime_immutable')]
+    private DateTimeImmutable $lastActiveAt;
+
+    /**
+     * When the warning about the pending deletion went out, and null while
+     * none is outstanding. Cleared as soon as the account is used again, so a
+     * returning user starts the whole clock over.
+     */
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?DateTimeImmutable $inactivityNoticeSentAt = null;
+
     #[ORM\OneToOne(mappedBy: 'user', targetEntity: BringCredential::class, cascade: ['persist', 'remove'])]
     private ?BringCredential $bringCredential = null;
 
     public function __construct()
     {
         $this->createdAt = new DateTimeImmutable();
+        // Creating an account is using it. Starting at zero would put a fresh
+        // account eleven months from a warning it has done nothing to deserve.
+        $this->lastActiveAt = $this->createdAt;
     }
 
     public function getId(): ?int
@@ -98,6 +116,30 @@ class User implements UserInterface
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getLastActiveAt(): DateTimeImmutable
+    {
+        return $this->lastActiveAt;
+    }
+
+    public function setLastActiveAt(DateTimeImmutable $moment): self
+    {
+        $this->lastActiveAt = $moment;
+
+        return $this;
+    }
+
+    public function getInactivityNoticeSentAt(): ?DateTimeImmutable
+    {
+        return $this->inactivityNoticeSentAt;
+    }
+
+    public function setInactivityNoticeSentAt(?DateTimeImmutable $moment): self
+    {
+        $this->inactivityNoticeSentAt = $moment;
+
+        return $this;
     }
 
     public function getBringCredential(): ?BringCredential
