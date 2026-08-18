@@ -1,0 +1,6 @@
+# Reachable only if an account is ever created through a validated form. Today
+# the authenticator creates them directly, so this is a guard rather than a
+# message users see.
+user:
+    email:
+        already_used: 'An account with this address already exists.'

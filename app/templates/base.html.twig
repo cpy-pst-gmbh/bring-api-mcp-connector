@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}{{ 'app.name'|trans }}{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🛒</text></svg>">
+
+        {% block stylesheets %}{% endblock %}
+
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    {# The card is the page. Header and footer are plain centred lines above and
+       below it rather than bars of their own, so nothing competes with it. #}
+    <body class="flex min-h-full flex-col items-center justify-center gap-6 bg-slate-50 px-4 py-10 text-slate-900 antialiased">
+        <header class="w-full max-w-3xl text-center">
+            <a href="{{ path('app_home') }}" class="inline-flex items-center gap-2 font-semibold tracking-tight">
+                <span aria-hidden="true">🛒</span>
+                {{ 'app.name'|trans }}
+            </a>
+
+            {% if app.user %}
+                <p class="mt-1 text-sm text-slate-500">
+                    {{ app.user.userIdentifier }} ·
+                    <a href="{{ path('app_logout') }}" class="font-medium text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline">
+                        {{ 'app.sign_out'|trans }}
+                    </a>
+                </p>
+            {% endif %}
+        </header>
+
+        <main class="w-full max-w-3xl">
+            {% block body %}{% endblock %}
+        </main>
+
+        <footer class="w-full max-w-3xl text-center text-xs text-slate-500">
+            <p>{{ 'app.disclaimer'|trans }}</p>
+
+            {% if privacy_policy_url or imprint_url %}
+                <nav class="mt-1 flex justify-center gap-4">
+                    {% if privacy_policy_url %}
+                        <a href="{{ privacy_policy_url }}" class="underline-offset-4 hover:text-slate-900 hover:underline">
+                            {{ 'app.privacy_policy'|trans }}
+                        </a>
+                    {% endif %}
+                    {% if imprint_url %}
+                        <a href="{{ imprint_url }}" class="underline-offset-4 hover:text-slate-900 hover:underline">
+                            {{ 'app.imprint'|trans }}
+                        </a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        </footer>
+
+        {# Out of the flow on purpose: a message that appears between the
+           header and the card shifts everything below it, and the layout is
+           the point of this page. #}
+        <div class="pointer-events-none fixed inset-x-0 top-4 z-60 flex flex-col items-center gap-2 px-4"
+             role="status" aria-live="polite">
+            {% for label, messages in app.flashes(['success', 'error']) %}
+                {% for message in messages %}
+                    <div data-controller="toast"
+                         data-toast-delay-value="{{ label == 'error' ? 10000 : 5000 }}"
+                         data-action="click->toast#dismiss"
+                         class="pointer-events-auto w-full max-w-md cursor-pointer rounded-lg border px-4 py-3 text-sm shadow-lg transition duration-300 {{ label == 'success'
+                             ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                             : 'border-red-200 bg-red-50 text-red-800' }}">
+                        {{ message|trans }}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        {# Shown only while <html> carries aria-busy, which Turbo sets for the
+           duration of a visit. aria-hidden because a screen reader already
+           learns about the busy state from that attribute. #}
+        <div id="loading-overlay" aria-hidden="true"
+             class="fixed inset-0 z-50 place-items-center bg-slate-50/70 backdrop-blur-[1px]">
+            <span data-spinner
+                  class="size-8 animate-spin rounded-full border-4 border-slate-300 border-t-slate-900"></span>
+        </div>
+    </body>
+</html>

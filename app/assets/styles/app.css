@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@layer base {
+    /* Tailwind v4 dropped the preflight rule that gave buttons a pointer
+       cursor — v3 still shipped it. Restoring it here beats repeating the
+       utility class on every button, and covers ones added later. */
+    button:not(:disabled),
+    [role="button"]:not(:disabled) {
+        cursor: pointer;
+    }
+}
+
+@layer components {
+    /* Turbo marks the document busy for the length of a visit, so the overlay
+       needs no JavaScript of its own — and it covers form submissions and link
+       navigations alike.
+
+       Both states live here rather than starting from a `hidden` class: that
+       utility sits in a later layer and would win over this rule. */
+    #loading-overlay {
+        display: none;
+    }
+
+    html[aria-busy="true"] #loading-overlay {
+        display: grid;
+    }
+
+    /* The spinner is motion for its own sake; anyone who asked for less of it
+       still gets the block, just without the turning. */
+    @media (prefers-reduced-motion: reduce) {
+        #loading-overlay [data-spinner] {
+            animation: none;
+        }
+    }
+}

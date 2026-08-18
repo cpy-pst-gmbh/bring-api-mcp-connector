@@ -1,0 +1,12 @@
+twig:
+    file_name_pattern: '*.twig'
+    form_themes:
+        - 'form/theme.html.twig'
+    globals:
+        # Footer links, rendered only when configured.
+        privacy_policy_url: '%app.privacy_policy_url%'
+        imprint_url: '%app.imprint_url%'
+
+when@test:
+    twig:
+        strict_variables: true

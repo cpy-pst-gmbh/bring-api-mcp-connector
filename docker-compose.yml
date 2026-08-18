@@ -1,26 +1,73 @@
 services:
+  app:
+    build: ./app
+    # image: ghcr.io/YOUR-USER/bring-api-mcp-connector/app:latest
+    container_name: bring-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_SECRET: "${APP_SECRET}"
+      # Out of var/, which is not a volume — see the Dockerfile.
+      DATABASE_URL: "sqlite:///%kernel.project_dir%/data/app.db"
+      # Encrypts the stored Bring! passwords. Losing it makes every stored
+      # password unreadable — back it up with the database.
+      BRING_CREDENTIALS_KEY: "${BRING_CREDENTIALS_KEY}"
+      OAUTH_PASSPHRASE: "${OAUTH_PASSPHRASE}"
+      OAUTH_ENCRYPTION_KEY: "${OAUTH_ENCRYPTION_KEY}"
+      # Without this the app believes it is reached at http://…:8000 and puts
+      # that into the discovery documents and the login links.
+      TRUSTED_PROXIES: "${TRUSTED_PROXIES:-172.16.0.0/12}"
+      # Shown on the account page so users can paste it into Claude.
+      MCP_ENDPOINT: "${BASE_URL}/mcp"
+      # /health talks to the MCP container directly, not back through the proxy.
+      MCP_HEALTH_URL: "http://bring-mcp:8080/.well-known/oauth-protected-resource/mcp"
+      MAILER_DSN: "${MAILER_DSN:-null://null}"
+      MAIL_FROM: "${MAIL_FROM:-no-reply@localhost}"
+      PRIVACY_POLICY_URL: "${PRIVACY_POLICY_URL:-}"
+      IMPRINT_URL: "${IMPRINT_URL:-}"
+    volumes:
+      # The SQLite database and the OAuth keypair must outlive the container.
+      - app-data:/app/data
+      - app-jwt:/app/config/jwt
+    cap_drop:
+      - ALL
+    cap_add:
+      # Not used — it listens on 8000 — but the frankenphp binary carries this
+      # capability, and a file with capabilities outside the bounding set
+      # cannot be executed at all.
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+
   bring-mcp:
-    build: .
-    # Alternativ, wenn du das Image via GitHub Actions baust:
-    # image: ghcr.io/DEIN-USER/bring-mcp:latest
+    build: ./mcp
+    # image: ghcr.io/YOUR-USER/bring-api-mcp-connector/mcp:latest
     container_name: bring-mcp
     restart: unless-stopped
+    depends_on:
+      - app
     ports:
       - "8080:8080"
     environment:
-      # --- Bring ---
-      BRING_USERNAME: "${BRING_USERNAME}"
-      BRING_PASSWORD: "${BRING_PASSWORD}"
-      BRING_LIST_NAME: "${BRING_LIST_NAME}"
-      # --- GitHub OAuth App ---
-      GITHUB_CLIENT_ID: "${GITHUB_CLIENT_ID}"
-      GITHUB_CLIENT_SECRET: "${GITHUB_CLIENT_SECRET}"
-      # Öffentliche HTTPS-Adresse dieses Servers, ohne Slash am Ende
-      BASE_URL: "${BASE_URL}"
-      # Kommaseparierte GitHub-Logins mit Zugriff. Unbedingt setzen!
-      ALLOWED_GITHUB_USERS: "${ALLOWED_GITHUB_USERS}"
+      # Public HTTPS address of this server, without a trailing slash
+      BASE_URL: "${MCP_BASE_URL}"
+      # Public HTTPS address of the Symfony authorization server — this is what
+      # the protected-resource metadata advertises to Claude.
+      AUTH_SERVER_URL: "${BASE_URL}"
+      # Server-to-server calls (JWKS, credentials) take the compose network
+      # instead of leaving through the reverse proxy and coming back.
+      AUTH_SERVER_INTERNAL_URL: "http://app:8000"
+      # Optional: pin the token audience to one client identifier. Empty
+      # when users create their own connectors, which is the normal case.
+      OAUTH_AUDIENCE: "${OAUTH_AUDIENCE:-}"
+      CREDENTIALS_CACHE_TTL: "${CREDENTIALS_CACHE_TTL:-900}"
       LOG_LEVEL: "INFO"
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
+
+volumes:
+  app-data:
+  app-jwt:

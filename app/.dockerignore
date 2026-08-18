@@ -1,0 +1,17 @@
+# Runtime state lives in volumes; a stale copy from the working tree would be
+# baked into the image and then shadowed anyway.
+var/
+vendor/
+public/assets/
+public/bundles/
+assets/vendor/
+
+# Local overrides never belong in an image.
+.env.local
+.env.*.local
+
+# Secrets: the keypair is generated on first start into a volume.
+config/jwt/
+
+.git/
+.idea/

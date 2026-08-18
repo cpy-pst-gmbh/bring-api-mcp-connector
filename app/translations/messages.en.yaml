@@ -1,0 +1,162 @@
+app:
+    name: 'Bring Connector'
+    close: 'Close'
+    sign_out: 'Sign out'
+    disclaimer: 'Uses an unofficial Bring! API. Not affiliated with Bring! Labs AG.'
+    privacy_policy: 'Privacy Policy'
+    imprint: 'Imprint'
+
+login:
+    title: 'Sign in · Bring Connector'
+    heading: 'Sign in'
+    lead: 'Use your Bring! account. There is no separate password here — if this is your first time, signing in creates your account.'
+    email: 'Bring! email address'
+    password: 'Bring! password'
+    password_help: 'Checked with Bring! and stored encrypted, so the connector can reach your list.'
+    submit: 'Sign in'
+    link:
+        summary: 'Password not working, or Bring! unreachable?'
+        lead: 'We can email you a sign-in link instead. It works only if you already have an account here, and lets you update your stored Bring! password.'
+        email: 'Email address'
+        submit: 'Email me a sign-in link'
+        # Deliberately the same whether or not the address has an account.
+        sent: 'If that address has an account, a sign-in link is on its way.'
+
+email:
+    login_link:
+        subject: 'Your sign-in link'
+        greeting: 'Hello,'
+        lead: 'Use this link to sign in to Bring Connector:'
+        action: 'Sign in'
+        expiry: 'The link works once and expires %date% UTC.'
+        ignore: 'If you did not ask for it, ignore this email — nothing happens until the link is opened.'
+
+wizard:
+    steps_label: 'Steps'
+    step:
+        login:
+            title: 'Sign in with Bring!'
+            description: 'Your Bring! credentials are the account — there is nothing separate to register.'
+        connector:
+            title: 'Add a connector'
+            description: 'A client ID for Claude, tied to one of your shopping lists.'
+        claude:
+            title: 'Connect Claude'
+            description: 'Paste the endpoint and the client ID into a custom connector.'
+
+account:
+    title: 'Account · Bring Connector'
+    consent_pending: 'An authorization request from Claude is waiting.'
+    consent_continue: 'Continue there'
+    password:
+        heading: 'Change stored password'
+        lead: 'Only needed if you changed your password at Bring! and got in here through a sign-in link. Signing in the normal way updates it by itself.'
+        updated_at: 'Last updated %date%'
+        label: 'New Bring! password'
+        help: 'Checked with Bring! and stored encrypted.'
+        button: 'Change password'
+        submit: 'Update password'
+        cancel: 'Cancel'
+        flash:
+            updated: 'Bring! password updated.'
+            rejected: 'Bring! rejected this password.'
+            unverified: 'Bring! could not confirm this password right now. It was stored anyway — sign in again later to be sure.'
+    delete:
+        heading: 'Delete account'
+        lead: 'Removes your stored Bring! password and every connector. Your Bring! account itself is untouched.'
+        button: 'Delete account'
+        modal:
+            heading: 'Delete your account?'
+            body: 'Every connector stops working immediately and the stored Bring! password is erased. Signing in again creates a fresh, empty account.'
+            confirm: 'Delete permanently'
+            cancel: 'Keep it'
+        flash:
+            deleted: 'Your account and everything stored with it is gone.'
+
+settings:
+    heading: 'Settings'
+
+claude:
+    heading: 'Connect Claude'
+    lead: 'In Claude: Settings → Connectors → Add custom connector.'
+    endpoint: 'MCP endpoint'
+    endpoint_missing: 'The operator has not configured the public MCP address. Ask them for the URL.'
+    client_id: 'Client ID'
+    client_id_help: 'Goes under Advanced settings in the connector dialog.'
+    writes_to: 'Items land on %list% unless Claude names another list.'
+    writes_to_first: 'the first list of your account'
+    choose: 'Connector'
+    choose_submit: 'Show'
+    add_another: 'Add another connector'
+
+connector:
+    heading: 'Connectors'
+    lead: 'Each connector is a client ID you enter in Claude. Revoking one cuts off that connection immediately, without touching the others.'
+    endpoint_heading: 'MCP endpoint'
+    endpoint_help: 'In Claude: Settings → Connectors → Add custom connector, paste this URL, then enter the client ID under Advanced settings.'
+    empty: 'No connectors yet.'
+    writes_to: 'Writes to %list%'
+    writes_to_first: 'the first list'
+    created_at: 'created %date%'
+    revoke: 'Revoke'
+    create: 'Create connector'
+    modal:
+        heading: 'New connector'
+        name: 'Name'
+        name_placeholder: 'Claude'
+        list: 'Default list'
+        list_first: 'First list of the account'
+        list_placeholder: 'Leave empty for the first list'
+        list_help: 'Where this connector puts items when Claude does not name a list. Claude can always target another one per request.'
+        list_help_offline: 'Your lists could not be read from Bring! right now, so type the name exactly as it appears there.'
+        submit: 'Create'
+        cancel: 'Cancel'
+    flash:
+        created: 'Connector created. Enter the client ID %identifier% in Claude.'
+        revoked: 'Connector revoked. Claude can no longer reach your list with it.'
+        limit_reached: 'You already have %limit% connectors. Revoke one first.'
+        unknown_list: 'Unknown list %list% — the connector uses the first list instead.'
+
+consent:
+    title: 'Authorize · Bring Connector'
+    heading: 'Authorize %client%'
+    lead: '%client% is asking for access to your shopping list as %email%.'
+    permissions_heading: 'It will be able to'
+    permission_read: 'read your Bring! lists and their items'
+    permission_write: 'add items and tick them off'
+    scopes: '{1}Scope: %scopes%|]1,Inf[Scopes: %scopes%'
+    allow: 'Allow'
+    deny: 'Deny'
+    flash:
+        nothing_pending: 'No authorization request is waiting. Start the connection from Claude.'
+
+health:
+    title_ok: 'Healthy · Bring Connector'
+    title_failed: 'Unhealthy · Bring Connector'
+    heading_ok: 'All checks passed'
+    heading_failed: 'Something needs attention'
+    checked_at: 'Checked %date% · answered HTTP %status%'
+    as_json: 'Same data as JSON:'
+    status:
+        ok: 'ok'
+        failed: 'failed'
+        skipped: 'skipped'
+    check:
+        database: 'Database'
+        mcp_server: 'MCP server'
+        oauth_keypair: 'OAuth keypair'
+        credential_cipher: 'Credential encryption'
+    detail:
+        database_unreachable: 'Not reachable.'
+        database_readonly: 'Readable but not writable.'
+        database_read_only_platform: 'read only, write not probed on this platform'
+        mcp_unreachable: 'Not reachable.'
+        mcp_status: 'Metadata endpoint answered with %status%.'
+        mcp_malformed: 'Metadata document has no "resource".'
+        mcp_not_configured: 'Neither MCP_HEALTH_URL nor MCP_ENDPOINT is set.'
+        keypair_private_missing: 'Private key is missing or unreadable.'
+        keypair_public_missing: 'Public key is missing or unreadable.'
+        keypair_public_invalid: 'Public key is not a valid PEM.'
+        keypair_not_rsa: 'Public key is not RSA, which the JWKS document assumes.'
+        cipher_unusable: 'Key missing or unusable.'
+        cipher_roundtrip: 'Encryption round-trip returned a different value.'

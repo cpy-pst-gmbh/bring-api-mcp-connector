@@ -1,0 +1,9 @@
+# Messages thrown as CustomUserMessageAuthenticationException. The login
+# template renders them through the "security" domain, which is also where
+# Symfony's own authentication messages live.
+login:
+    error:
+        invalid_csrf: 'Invalid CSRF token.'
+        missing_credentials: 'Enter your Bring! email address and password.'
+        bring_unreachable: 'Bring! is not responding right now, so your password cannot be checked. Request a login link instead.'
+        bring_rejected: 'Bring! rejected these credentials.'

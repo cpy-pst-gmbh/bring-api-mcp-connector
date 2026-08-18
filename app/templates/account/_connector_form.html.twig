@@ -1,0 +1,44 @@
+{#
+  The create-connector form. Step 2 renders it inline, because filling it in is
+  the step; step 3 puts the same markup in a dialog for adding another one.
+#}
+<form method="post" action="{{ path('app_connector_create') }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('create_connector') }}">
+
+    <div class="mb-5">
+        <label for="{{ id_prefix }}-label" class="mb-1 block text-sm font-medium text-slate-700">
+            {{ 'connector.modal.name'|trans }}
+        </label>
+        <input type="text" id="{{ id_prefix }}-label" name="label"
+               placeholder="{{ 'connector.modal.name_placeholder'|trans }}" maxlength="60"
+               class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-xs outline-none placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200">
+    </div>
+
+    <div class="mb-5">
+        <label for="{{ id_prefix }}-list" class="mb-1 block text-sm font-medium text-slate-700">
+            {{ 'connector.modal.list'|trans }}
+        </label>
+        {% if list_names is null %}
+            <input type="text" id="{{ id_prefix }}-list" name="default_list" maxlength="120"
+                   placeholder="{{ 'connector.modal.list_placeholder'|trans }}"
+                   class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-xs outline-none placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200">
+            <p class="mt-1.5 text-sm text-slate-500">{{ 'connector.modal.list_help_offline'|trans }}</p>
+        {% else %}
+            <select id="{{ id_prefix }}-list" name="default_list"
+                    class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-xs outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200">
+                <option value="">{{ 'connector.modal.list_first'|trans }}</option>
+                {% for name in list_names %}
+                    <option value="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+            <p class="mt-1.5 text-sm text-slate-500">{{ 'connector.modal.list_help'|trans }}</p>
+        {% endif %}
+    </div>
+
+    {% block actions %}
+        <button type="submit"
+                class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2">
+            {{ 'connector.modal.submit'|trans }}
+        </button>
+    {% endblock %}
+</form>

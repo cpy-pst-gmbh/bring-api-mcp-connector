@@ -1,4 +1,10 @@
-.env
+# Docker env for the MCP server. Anchored, so app/.env — a committed
+# Symfony defaults file — is not swept up with it.
+/.env
+/.idea
+
 .venv/
 __pycache__/
 *.pyc
+
+CLAUDE.md
