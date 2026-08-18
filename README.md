@@ -7,6 +7,12 @@ copied by hand.
 Built on [`bring-api`](https://github.com/miaucl/bring-api) (unofficial, not
 supported by Bring! Labs AG) and [FastMCP](https://gofastmcp.com).
 
+## SaaS
+
+We have a production system that makes it easy to use the connector: https://bring.app.cpy-pst.de
+
+However, the password for Bring must be saved. If you don't want to trust us, you should install it yourself.
+
 ## Layout
 
 | Path | Contents |
