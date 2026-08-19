@@ -10,6 +10,10 @@ assets/vendor/
 .env.local
 .env.*.local
 
+# .env itself stays: Symfony's Dotenv throws PathException when it is missing,
+# so an image without it does not boot at all. It carries defaults only —
+# every secret slot in it is empty and the environment fills them in.
+
 # Secrets: the keypair is generated on first start into a volume.
 config/jwt/
 

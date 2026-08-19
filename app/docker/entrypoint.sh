@@ -24,6 +24,20 @@ if [ -z "${APP_SECRET:-}" ]; then
     exit 1
 fi
 
+# Encrypts authorization codes and refresh token payloads. The committed .env
+# no longer carries a default, so a forgotten variable reaches the oauth2
+# bundle as an empty string and surfaces somewhere around /authorize. Cheaper
+# to say so before the server starts.
+if [ -z "${OAUTH_ENCRYPTION_KEY:-}" ]; then
+    echo "OAUTH_ENCRYPTION_KEY is not set. Any random string will do:" >&2
+    echo "  openssl rand -hex 16" >&2
+    exit 1
+fi
+
+# OAUTH_PASSPHRASE is deliberately not checked: empty means a keypair without
+# one, which is a valid choice. What matters is that it keeps the value the
+# keypair below was generated with.
+
 # The keypair signs access tokens. Generating it here means a first start needs
 # no manual step, and the volume keeps it stable afterwards — a new keypair
 # would invalidate every token Claude still holds.

@@ -306,6 +306,14 @@ The MCP Inspector is a good way to test without Claude.
 
 ### Symfony app
 
+The committed `app/.env` holds no secrets — every slot for one is empty, and
+the environment fills them in. For a checkout that means writing them into
+`app/.env.local`, which is ignored by git and left out of the image:
+
+```bash
+printf 'APP_SECRET=%s\nOAUTH_PASSPHRASE=%s\nOAUTH_ENCRYPTION_KEY=%s\n' "$(openssl rand -hex 16)" "$(openssl rand -hex 16)" "$(openssl rand -hex 16)" >> app/.env.local
+```
+
 Install dependencies and create the schema:
 
 ```bash
