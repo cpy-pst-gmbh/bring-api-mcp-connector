@@ -435,6 +435,23 @@ They need no database, no container and no Bring! account — the repository
 tests run their queries against an in-memory SQLite. `app-checks.yml` runs them
 on every pull request that touches `app/`.
 
+### MCP server tests
+
+pytest covers the parts of `mcp/server.py` that have nothing to do with Bring!
+being reachable: the credential exchange with Symfony and each way it can fail,
+the per-subject session cache, and which list an item ends up on.
+
+```bash
+pip install -r mcp/requirements.txt -r mcp/requirements-dev.txt
+```
+
+```bash
+cd mcp && pytest
+```
+
+No network, no Bring! account, no running Symfony — the credential endpoint,
+the Bring client and FastMCP's request context are all stood in for.
+
 ### Coding standard
 
 `@Symfony` plus a handful of rules, configured in `app/.php-cs-fixer.dist.php`.

@@ -220,6 +220,23 @@ async def _session() -> BringSession:
         return entry
 
 
+async def _call(request):
+    """Awaits a Bring! call and turns its failures into something readable.
+
+    bring-api raises the same two exceptions from every call, and every one of
+    them can hit a service that is simply not there right now. Left uncaught
+    they reach the user as a traceback, which says nothing about what to do —
+    so all of them take this route.
+
+    A login failure is not one of these: that has its own message, because the
+    stored credentials are something the user can go and fix.
+    """
+    try:
+        return await request
+    except (BringAuthException, BringRequestException) as exc:
+        raise ToolError(f"Bring is unreachable: {exc}") from exc
+
+
 async def _resolve_list(name: str | None) -> tuple[Bring, str, str]:
     """Returns (bring, uuid, name) of the target list for the caller.
 
@@ -229,10 +246,7 @@ async def _resolve_list(name: str | None) -> tuple[Bring, str, str]:
     entry = await _session()
     wanted = (name or entry.list_name or "").strip()
 
-    try:
-        lists = (await entry.bring.load_lists()).lists
-    except (BringAuthException, BringRequestException) as exc:
-        raise ToolError(f"Bring is unreachable: {exc}") from exc
+    lists = (await _call(entry.bring.load_lists())).lists
 
     if not lists:
         raise ToolError("This Bring! account has no lists.")
@@ -253,7 +267,9 @@ async def list_shopping_lists() -> list[str]:
     """Names all available Bring shopping lists."""
     entry = await _session()
 
-    return [candidate.name for candidate in (await entry.bring.load_lists()).lists]
+    lists = (await _call(entry.bring.load_lists())).lists
+
+    return [candidate.name for candidate in lists]
 
 
 @mcp.tool
@@ -281,7 +297,7 @@ async def add_items(
     bring, uuid, name = await _resolve_list(list_name)
 
     for item, spec in zip(items, specs):
-        await bring.save_item(uuid, item, spec)
+        await _call(bring.save_item(uuid, item, spec))
         logger.info("Added: %s (%s) -> %s", item, spec or "-", name)
 
     return f"Added {len(items)} items to {name!r}."
@@ -303,7 +319,7 @@ async def get_shopping_list(list_name: str | None = None) -> dict:
         list_name: Exact list name. Empty uses the connector's default.
     """
     bring, uuid, name = await _resolve_list(list_name)
-    items = (await bring.get_list(uuid)).items
+    items = (await _call(bring.get_list(uuid))).items
 
     return {
         "list": name,
@@ -321,7 +337,7 @@ async def complete_item(item: str, list_name: str | None = None) -> str:
         list_name: Exact list name. Empty uses the connector's default.
     """
     bring, uuid, name = await _resolve_list(list_name)
-    await bring.complete_item(uuid, item)
+    await _call(bring.complete_item(uuid, item))
 
     return f"Ticked {item!r} off {name!r}."
 

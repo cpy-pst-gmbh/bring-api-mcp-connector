@@ -1,0 +1,55 @@
+name: MCP checks
+
+# Everything the Python half needs, in one job. Both steps want the same pip
+# install, and that install is the slow part — running it twice to keep two
+# workflows apart buys nothing.
+on:
+  # push is limited to main, or a push to a branch with an open pull request
+  # matches both triggers and everything runs twice for one commit.
+  push:
+    branches: [main]
+    paths:
+      - "mcp/**"
+      - "tools/check-bring-constants.py"
+      - "app/.env"
+      - ".github/workflows/mcp-checks.yml"
+  pull_request:
+    paths:
+      - "mcp/**"
+      - "tools/check-bring-constants.py"
+      - "app/.env"
+      - ".github/workflows/mcp-checks.yml"
+  workflow_dispatch:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          # Same as the image the server runs in.
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r mcp/requirements.txt -r mcp/requirements-dev.txt
+
+      # Nothing here reaches Bring!, Symfony or any network: the credential
+      # endpoint, the Bring client and FastMCP's request context are all
+      # stood in for.
+      - name: Unit tests
+        working-directory: mcp
+        run: pytest
+
+      # The Symfony side keeps its own copy of Bring!'s base URL and request
+      # headers, because signing in happens before any MCP token exists.
+      # Bumping bring-api can move those upstream without anyone noticing, so
+      # this fails loudly instead. Runs even when the tests failed — the two
+      # answer different questions.
+      - name: Compare the Bring constants
+        if: '!cancelled()'
+        run: python tools/check-bring-constants.py
