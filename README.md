@@ -432,8 +432,18 @@ php app/bin/phpunit
 ```
 
 They need no database, no container and no Bring! account — the repository
-tests run their queries against an in-memory SQLite. A workflow runs them on
-every pull request that touches `app/`.
+tests run their queries against an in-memory SQLite. `app-checks.yml` runs them
+on every pull request that touches `app/`.
+
+### Coding standard
+
+`@Symfony` plus a handful of rules, configured in `app/.php-cs-fixer.dist.php`.
+The same workflow that runs the unit tests checks it on every pull request
+touching `app/`, so it is worth running before pushing:
+
+```bash
+cd app && vendor/bin/php-cs-fixer fix
+```
 
 ### End-to-end tests
 

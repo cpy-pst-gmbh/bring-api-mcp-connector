@@ -1,0 +1,76 @@
+# Both halves of this service are pinned exactly — composer.lock on one side,
+# == versions in requirements.txt on the other — which is right for
+# reproducible images and wrong for hearing about a security release. This is
+# what turns a pin into a decision somebody makes weekly instead of never.
+version: 2
+
+updates:
+  # The Symfony application. Symfony itself moves as a fleet of packages, so
+  # its minor and patch releases arrive as one pull request rather than thirty.
+  - package-ecosystem: composer
+    directory: /app
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      symfony:
+        patterns:
+          - "symfony/*"
+          - "twig/*"
+        update-types:
+          - minor
+          - patch
+      doctrine:
+        patterns:
+          - "doctrine/*"
+        update-types:
+          - minor
+          - patch
+      dev:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+
+  # The MCP server. bring-api is reverse-engineered and its constants are
+  # duplicated on the PHP side, so every bump here is also what
+  # check-bring-constants.yml exists to catch — the workflow runs on this file.
+  - package-ecosystem: pip
+    directory: /mcp
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+
+  # Base images. Both Dockerfiles pin a major, so this is where a rebuilt
+  # FrankenPHP or Python image with patched system libraries shows up.
+  - package-ecosystem: docker
+    directories:
+      - /app
+      - /mcp
+    schedule:
+      interval: weekly
+      day: monday
+
+  # Playwright, which the end-to-end workflow installs on every run.
+  - package-ecosystem: npm
+    directory: /tests
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      playwright:
+        patterns:
+          - "@playwright/*"
+
+  # The actions the four workflows pin by major.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns:
+          - "*"
