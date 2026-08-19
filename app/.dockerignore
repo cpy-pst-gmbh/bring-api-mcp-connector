@@ -14,6 +14,13 @@ assets/vendor/
 # so an image without it does not boot at all. It carries defaults only —
 # every secret slot in it is empty and the environment fills them in.
 
+# The test suite and its configuration. composer installs without dev
+# dependencies, so none of this could run in the image anyway.
+tests/
+phpunit.dist.xml
+.phpunit.cache/
+.env.test
+
 # Secrets: the keypair is generated on first start into a volume.
 config/jwt/
 

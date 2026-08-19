@@ -372,6 +372,21 @@ A GitHub Actions workflow runs the check whenever `mcp/requirements.txt`
 changes. It only guards the constants — a changed endpoint path or response
 shape still surfaces as a failing login.
 
+### Unit tests
+
+PHPUnit covers what the browser suite cannot see from the outside: the
+credential cipher, the dormant-account policy and its two deadlines, the
+Doctrine listener that decides whether a stored password is rewritten, and the
+paths that have to return null instead of throwing.
+
+```bash
+php app/bin/phpunit
+```
+
+They need no database, no container and no Bring! account — the repository
+tests run their queries against an in-memory SQLite. A workflow runs them on
+every pull request that touches `app/`.
+
 ### End-to-end tests
 
 Playwright drives the running containers — the same images that get deployed,
