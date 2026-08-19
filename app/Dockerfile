@@ -72,12 +72,17 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint
 COPY docker/maintenance.sh /usr/local/bin/maintenance
 
 RUN chmod +x /usr/local/bin/entrypoint /usr/local/bin/maintenance \
-    && mkdir -p var data config/jwt /data/caddy /config/caddy \
-    && chown -R www-data:www-data var data config/jwt /data /config
+    && mkdir -p var data backups config/jwt /data/caddy /config/caddy \
+    && chown -R www-data:www-data var data backups config/jwt /data /config
 
 # Only state, and only state: the database and the OAuth keypair. var/ stays
 # inside the container on purpose — it holds the compiled cache, and a volume
 # would carry the previous image's compiled templates into the new one.
+#
+# backups/ is not listed: only the cron role writes there, and the compose file
+# mounts a volume for it. What the directory above is for is its ownership — a
+# fresh named volume inherits it from the image, and without that the mount
+# would belong to root and www-data could not write a single copy.
 VOLUME ["/app/data", "/app/config/jwt"]
 
 # Not root — and not merely as good practice. docker-compose drops all

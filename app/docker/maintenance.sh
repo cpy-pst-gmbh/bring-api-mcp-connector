@@ -24,9 +24,16 @@ if [ -z "${BRING_CREDENTIALS_KEY:-}" ] || [ -z "${APP_SECRET:-}" ]; then
 fi
 
 run() {
-    # Neither command may take the loop down with it. A locked database or an
+    # None of these may take the loop down with it. A locked database or an
     # unreachable mail server is a reason to try again tomorrow, not to stop
     # maintaining the installation until somebody notices.
+
+    # First, so today's copy still holds the accounts the prune is about to
+    # delete — a wrong deadline is recoverable for as long as the backups go
+    # back further than the mistake.
+    php bin/console app:database:backup --no-interaction \
+        || echo "Database backup failed; will retry at the next run." >&2
+
     php bin/console app:accounts:prune-inactive --no-interaction \
         || echo "Pruning inactive accounts failed; will retry at the next run." >&2
 

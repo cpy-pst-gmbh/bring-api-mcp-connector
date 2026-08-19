@@ -105,6 +105,9 @@ services:
       MAIL_SIGNATURE: "${MAIL_SIGNATURE:-}"
       # Hour of the day, UTC, at which the run starts.
       MAINTENANCE_HOUR: "${MAINTENANCE_HOUR:-4}"
+      # Written before anything is pruned. Not var/, which is not a volume.
+      BACKUP_DIR: "/app/backups"
+      BACKUP_KEEP: "${BACKUP_KEEP:-7}"
     volumes:
       - app-data:/app/data
       # Read by the OAuth bundle when the container boots, even though this
@@ -113,6 +116,11 @@ services:
       # The notice email is sent from here, so the signature has to be
       # readable from here too.
       - ./legal:/app/legal:ro
+      # Daily copies of the database, written by the maintenance run. Its own
+      # volume, so restoring one does not mean touching the volume it was
+      # taken from — bind-mount a host directory here to have them land
+      # somewhere that is already backed up off the machine.
+      - app-backups:/app/backups
     cap_drop:
       - ALL
     security_opt:
@@ -121,3 +129,4 @@ services:
 volumes:
   app-data:
   app-jwt:
+  app-backups:

@@ -39,6 +39,13 @@ parameters:
     app.mail_signature: '%env(string:default:app.empty_string:MAIL_SIGNATURE)%'
     app.privacy_policy_url: '%env(string:default:app.empty_string:PRIVACY_POLICY_URL)%'
     app.imprint_url: '%env(string:default:app.empty_string:IMPRINT_URL)%'
+    # Where the daily backup lands, and how many copies survive it. The default
+    # suits a checkout; in the container the compose file points this at a
+    # volume, because var/ is deliberately not one.
+    app.backup_dir: '%env(string:default:app.backup_dir_default:BACKUP_DIR)%'
+    app.backup_dir_default: '%kernel.project_dir%/var/backups'
+    app.backup_keep: '%env(int:default:app.backup_keep_default:BACKUP_KEEP)%'
+    app.backup_keep_default: 7
 
 services:
     # default configuration for services in *this* file

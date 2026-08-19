@@ -156,13 +156,61 @@ nothing is missing.
 
 ### Backing up
 
+The cron container copies the database every night, before it prunes anything,
+and keeps the last seven copies:
+
 ```bash
-docker compose exec app php -r "(new PDO('sqlite:/app/data/bring.db'))->exec(\"VACUUM INTO '/app/data/backup.db'\");"
+docker compose exec cron ls -l /app/backups
 ```
 
-`VACUUM INTO` takes a consistent copy while the app keeps running; copying the
-file out from under WAL does not. Save `app-jwt` and `BRING_CREDENTIALS_KEY`
-alongside it — without the key the stored passwords are unreadable.
+`VACUUM INTO` takes a consistent copy through SQLite itself while the app keeps
+serving. Copying the file from outside does not: with WAL enabled the data
+lives in two files, and a copy of one without the other restores to whatever
+the last checkpoint left behind.
+
+`BACKUP_KEEP` changes how many copies survive, `MAINTENANCE_HOUR` when they are
+taken. They land in the `app-backups` volume, which is deliberately not the one
+holding the database — replace it with a bind mount to have them written into a
+directory this machine already syncs off-site:
+
+```yaml
+      - /srv/backups/bring:/app/backups
+```
+
+The database is the only part that cannot be recreated. A lost OAuth keypair
+costs every connector one reconnect; a lost `BRING_CREDENTIALS_KEY` makes every
+copy above unreadable, so keep it wherever the copies go.
+
+To take one out by hand, or to run the copy off-schedule:
+
+```bash
+docker compose exec cron php bin/console app:database:backup
+```
+
+```bash
+docker compose cp bring-cron:/app/backups ./backups
+```
+
+### Restoring
+
+Stop the app first — restoring under a running server means writing the file
+out from under open connections:
+
+```bash
+docker compose stop app cron
+```
+
+```bash
+docker compose run --rm --entrypoint sh cron -c 'cp /app/backups/bring-20260101-040000.db /app/data/bring.db && rm -f /app/data/bring.db-wal /app/data/bring.db-shm'
+```
+
+The `-wal` and `-shm` files have to go with it. A leftover write-ahead log
+belongs to the database that was just replaced, and SQLite will happily replay
+it over the copy you restored.
+
+```bash
+docker compose start app cron
+```
 
 ### Adding it to Claude
 

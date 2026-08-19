@@ -56,7 +56,7 @@ class OAuthClient extends AbstractClient
         // puts that rule where the value is, instead of in every caller — and
         // Doctrine writes the backing store directly when hydrating, so a row
         // read back from the database does not run it again.
-        set (?string $value) {
+        set(?string $value) {
             $value = null === $value ? null : trim($value);
             $this->defaultListName = '' === $value ? null : $value;
         }
