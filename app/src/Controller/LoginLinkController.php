@@ -38,11 +38,11 @@ final class LoginLinkController extends AbstractController
         #[Autowire('%app.mail_from%')]
         string $mailFrom,
     ): Response {
-        if (!$this->isCsrfTokenValid('login_link', (string) $request->request->get('_token'))) {
+        if (false === $this->isCsrfTokenValid('login_link', $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
 
-        $email = trim((string) $request->request->get('email', ''));
+        $email = trim($request->request->getString('email'));
         $user = '' === $email ? null : $users->findOneByEmail($email);
 
         if (null !== $user) {

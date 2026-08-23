@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Health;
+namespace App\Service\Health;
 
-use App\Domain\Interfaces\HealthCheckInterface;
+use App\Domain\Interface\HealthCheckInterface;
+use App\Domain\Model\HealthResult;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Psr\Log\LoggerInterface;

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Legal;
 
-use App\Legal\LegalDocuments;
-use App\Legal\LegalPage;
-use App\Markdown\MarkdownFile;
+use App\Domain\Config\LegalPage;
+use App\Service\LegalDocumentService;
+use App\Service\MarkdownFileService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -19,7 +19,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * serve ourselves. A file that is configured but unreadable has to leave the
  * link out rather than take the footer — and with it every page — down.
  */
-#[CoversClass(LegalDocuments::class)]
+#[CoversClass(LegalDocumentService::class)]
 final class LegalDocumentsTest extends TestCase
 {
     private string $dir;
@@ -91,17 +91,17 @@ final class LegalDocumentsTest extends TestCase
         self::assertSame('/imprint', $documents->imprintHref());
     }
 
-    private function documents(string $privacyPolicy = '', string $imprint = ''): LegalDocuments
+    private function documents(string $privacyPolicy = '', string $imprint = ''): LegalDocumentService
     {
         $urls = $this->createStub(UrlGeneratorInterface::class);
         $urls->method('generate')->willReturnCallback(
             static fn (string $route): string => 'app_privacy_policy' === $route ? '/privacy' : '/imprint',
         );
 
-        return new LegalDocuments(
+        return new LegalDocumentService(
             $privacyPolicy,
             $imprint,
-            new MarkdownFile($this->dir, new NullLogger(), new ArrayAdapter()),
+            new MarkdownFileService($this->dir, new NullLogger(), new ArrayAdapter()),
             $urls,
         );
     }

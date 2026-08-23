@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Legal;
+namespace App\Domain\Config;
 
 /**
  * The two documents an operator may have to publish.

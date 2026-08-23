@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Legal;
+namespace App\Service;
 
-use App\Markdown\MarkdownFile;
+use App\Domain\Config\LegalPage;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -23,7 +23,7 @@ use function str_starts_with;
  * every page of the app down over a footer link, so the link is left out and
  * the misconfiguration is reported by /health instead.
  */
-final class LegalDocuments
+final class LegalDocumentService
 {
     /**
      * @var array<string, string|null> resolved paths, keyed by page
@@ -33,7 +33,7 @@ final class LegalDocuments
     public function __construct(
         #[Autowire('%app.privacy_policy_url%')] private readonly string $privacyPolicy,
         #[Autowire('%app.imprint_url%')] private readonly string $imprint,
-        private readonly MarkdownFile $markdown,
+        private readonly MarkdownFileService $markdown,
         private readonly UrlGeneratorInterface $urls,
     ) {
     }
@@ -87,7 +87,7 @@ final class LegalDocuments
     {
         $configured = $this->configured($page);
 
-        return '' !== $configured && !$this->isExternal($configured);
+        return '' !== $configured && false === $this->isExternal($configured);
     }
 
     /**
@@ -95,7 +95,7 @@ final class LegalDocuments
      */
     public function file(LegalPage $page): ?string
     {
-        if (!$this->isLocal($page)) {
+        if (false === $this->isLocal($page)) {
             return null;
         }
 

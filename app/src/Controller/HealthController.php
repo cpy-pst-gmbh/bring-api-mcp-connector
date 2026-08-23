@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Domain\Interfaces\HealthCheckInterface;
-use App\Health\HealthResult;
+use App\Domain\Interface\HealthCheckInterface;
+use App\Domain\Model\HealthResult;
 use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
@@ -42,7 +42,7 @@ final class HealthController extends AbstractController
         name: 'app_health',
         requirements: ['_format' => 'html|json'],
         defaults: ['_format' => 'html'],
-        methods: ['GET'],
+        methods: ['GET']
     )]
     public function index(string $_format): Response
     {

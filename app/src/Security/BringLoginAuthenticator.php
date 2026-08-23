@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Security;
 
-use App\Bring\BringApiClient;
-use App\Bring\BringUnreachableException;
+use App\Domain\Client\BringApiClient;
+use App\Domain\Exception\BringUnreachableException;
 use App\Entity\BringCredential;
 use App\Entity\User;
 use App\Repository\UserRepository;

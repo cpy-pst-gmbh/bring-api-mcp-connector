@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Health;
+namespace App\Service\Health;
 
-use App\Domain\Interfaces\HealthCheckInterface;
+use App\Domain\Interface\HealthCheckInterface;
+use App\Domain\Model\HealthResult;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;

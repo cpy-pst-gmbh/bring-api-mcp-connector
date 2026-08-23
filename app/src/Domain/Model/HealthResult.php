@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Health;
+namespace App\Domain\Model;
 
 /**
  * Outcome of a single check.

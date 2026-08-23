@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Health;
+namespace App\Service\Health;
 
-use App\Domain\Interfaces\HealthCheckInterface;
+use App\Domain\Interface\HealthCheckInterface;
+use App\Domain\Model\HealthResult;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -18,10 +19,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class OAuthKeypairCheck implements HealthCheckInterface
 {
     public function __construct(
-        #[Autowire('%env(resolve:OAUTH_PRIVATE_KEY)%')]
-        private string $privateKeyPath,
-        #[Autowire('%env(resolve:OAUTH_PUBLIC_KEY)%')]
-        private string $publicKeyPath,
+        #[Autowire('%env(resolve:OAUTH_PRIVATE_KEY)%')] private string $privateKeyPath,
+        #[Autowire('%env(resolve:OAUTH_PUBLIC_KEY)%')] private string $publicKeyPath,
     ) {
     }
 

@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Bring;
+namespace App\Service;
 
+use App\Domain\Client\BringApiClient;
+use App\Domain\Exception\BringUnreachableException;
 use App\Entity\User;
 use App\Security\CredentialCipher;
 use Psr\Log\LoggerInterface;
@@ -21,7 +23,7 @@ use function sprintf;
  * is not an error worth breaking a page over: callers get null and fall back to
  * a free-text field.
  */
-final class BringListProvider
+final class BringListService
 {
     private const int CACHE_TTL = 300;
 

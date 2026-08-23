@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Health;
 
-use App\Health\CredentialCipherCheck;
-use App\Health\HealthResult;
+use App\Domain\Model\HealthResult;
 use App\Security\CredentialCipher;
+use App\Service\Health\CredentialCipherCheck;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;

@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Bring;
+namespace App\Domain\Client;
 
+use App\Domain\Exception\BringUnreachableException;
 use Psr\Log\LoggerInterface;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Markdown;
 
-use App\Markdown\MarkdownFile;
+use App\Service\MarkdownFileService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -16,7 +16,7 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
  * rather than an exception: a footer link is not worth an error page, and a
  * signature is not worth an undelivered email.
  */
-#[CoversClass(MarkdownFile::class)]
+#[CoversClass(MarkdownFileService::class)]
 final class MarkdownFileTest extends TestCase
 {
     private string $dir;
@@ -101,9 +101,9 @@ final class MarkdownFileTest extends TestCase
         self::assertStringContainsString('Second', (string) $markdown->render($file));
     }
 
-    private function markdownFile(): MarkdownFile
+    private function markdownFile(): MarkdownFileService
     {
-        return new MarkdownFile($this->dir, new NullLogger(), new ArrayAdapter());
+        return new MarkdownFileService($this->dir, new NullLogger(), new ArrayAdapter());
     }
 
     private function write(string $path, string $contents): string

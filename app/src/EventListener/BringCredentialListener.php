@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Doctrine;
+namespace App\EventListener;
 
 use App\Entity\BringCredential;
 use App\Security\CredentialCipher;
@@ -25,9 +25,9 @@ use function assert;
  */
 #[AsEntityListener(event: Events::prePersist, entity: BringCredential::class)]
 #[AsEntityListener(event: Events::preUpdate, entity: BringCredential::class)]
-final class BringCredentialListener
+final readonly class BringCredentialListener
 {
-    public function __construct(private readonly CredentialCipher $cipher)
+    public function __construct(private CredentialCipher $cipher)
     {
     }
 

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Interfaces;
+namespace App\Domain\Interface;
 
-use App\Health\HealthResult;
+use App\Domain\Model\HealthResult;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 /**

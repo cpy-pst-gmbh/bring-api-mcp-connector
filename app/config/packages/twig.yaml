@@ -5,7 +5,7 @@ twig:
     globals:
         # Footer links. Each may be an external address or a Markdown file we
         # serve ourselves, so the service works out the href.
-        legal: '@App\Legal\LegalDocuments'
+        legal: '@App\Service\LegalDocumentService'
 
 when@test:
     twig:

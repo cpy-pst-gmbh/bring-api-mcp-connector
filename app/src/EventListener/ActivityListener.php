@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Account;
+namespace App\EventListener;
 
 use App\Entity\User;
+use App\Service\AccountActivityService;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 
@@ -19,7 +20,7 @@ use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
  */
 final readonly class ActivityListener
 {
-    public function __construct(private ActivityRecorder $recorder)
+    public function __construct(private AccountActivityService $recorder)
     {
     }
 

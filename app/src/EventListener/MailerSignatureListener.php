@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Mailer;
+namespace App\EventListener;
 
-use App\Markdown\MarkdownFile;
+use App\Service\MarkdownFileService;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Mailer\Event\MessageEvent;
@@ -25,11 +25,11 @@ use function is_string;
  * default priority there would be nothing to append to.
  */
 #[AsEventListener(event: MessageEvent::class, priority: -100)]
-final readonly class SignatureListener
+final readonly class MailerSignatureListener
 {
     public function __construct(
         #[Autowire('%app.mail_signature%')] private string $configuredPath,
-        private MarkdownFile $markdown,
+        private MarkdownFileService $markdown,
     ) {
     }
 
@@ -54,10 +54,7 @@ final readonly class SignatureListener
         $html = $message->getHtmlBody();
 
         if (true === is_string($html) && '' !== $html) {
-            // A horizontal rule rather than a wrapper with styling: these are
-            // fragments, not full documents, and the mail clients that would
-            // honour a class are not the ones this has to survive.
-            $message->html($html . "\n<hr>\n" . $signature);
+            $message->html($html . PHP_EOL . $signature);
         }
     }
 }

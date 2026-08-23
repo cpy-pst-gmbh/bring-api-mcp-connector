@@ -14,7 +14,11 @@
     </head>
     {# The card is the page. Header and footer are plain centred lines above and
        below it rather than bars of their own, so nothing competes with it. #}
-    <body class="flex min-h-full flex-col items-center justify-center gap-6 bg-slate-50 px-4 py-10 text-slate-900 antialiased">
+    {# The body is what the loading overlay locks, so the controller that sets
+       `inert` sits on it. Turbo swaps this element during a visit, which
+       reconnects the controller with a clean slate. #}
+    <body data-controller="busy"
+          class="flex min-h-full flex-col items-center justify-center gap-6 bg-slate-50 px-4 py-10 text-slate-900 antialiased">
         <header class="w-full max-w-3xl text-center">
             <a href="{{ path('app_home') }}" class="inline-flex items-center gap-2 font-semibold tracking-tight">
                 <span aria-hidden="true">🛒</span>

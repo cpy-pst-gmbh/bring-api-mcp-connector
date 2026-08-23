@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Doctrine;
 
-use App\Doctrine\BringCredentialListener;
 use App\Entity\BringCredential;
+use App\EventListener\BringCredentialListener;
 use App\Security\CredentialCipher;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PreUpdateEventArgs;

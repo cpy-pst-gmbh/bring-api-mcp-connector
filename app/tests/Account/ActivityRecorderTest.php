@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Account;
 
-use App\Account\ActivityRecorder;
 use App\Entity\User;
+use App\Service\AccountActivityService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
  * cheap — and the one case that has to write regardless is the account with an
  * outstanding deletion notice.
  */
-#[CoversClass(ActivityRecorder::class)]
+#[CoversClass(AccountActivityService::class)]
 final class ActivityRecorderTest extends TestCase
 {
     public function testAFreshTimestampIsLeftAlone(): void
@@ -27,7 +27,7 @@ final class ActivityRecorderTest extends TestCase
         $user = self::user(lastActiveAt: new DateTimeImmutable('-5 minutes'));
         $before = $user->getLastActiveAt();
 
-        new ActivityRecorder($em)->record($user);
+        new AccountActivityService($em)->record($user);
 
         self::assertSame($before, $user->getLastActiveAt());
     }
@@ -39,7 +39,7 @@ final class ActivityRecorderTest extends TestCase
 
         $user = self::user(lastActiveAt: new DateTimeImmutable('-2 hours'));
 
-        new ActivityRecorder($em)->record($user);
+        new AccountActivityService($em)->record($user);
 
         self::assertGreaterThan(new DateTimeImmutable('-1 minute'), $user->getLastActiveAt());
     }
@@ -59,7 +59,7 @@ final class ActivityRecorderTest extends TestCase
             noticeSentAt: new DateTimeImmutable('-3 days'),
         );
 
-        new ActivityRecorder($em)->record($user);
+        new AccountActivityService($em)->record($user);
 
         self::assertNull($user->getInactivityNoticeSentAt());
     }

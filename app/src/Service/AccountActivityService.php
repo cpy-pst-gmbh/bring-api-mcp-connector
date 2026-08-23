@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Account;
+namespace App\Service;
 
 use App\Entity\User;
 use DateInterval;
@@ -20,7 +20,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * An outstanding deletion notice is the exception: that has to be withdrawn the
  * moment the account is used, whatever the clock says.
  */
-final readonly class ActivityRecorder
+final readonly class AccountActivityService
 {
     /**
      * How stale the stored timestamp may get before it is worth a write.

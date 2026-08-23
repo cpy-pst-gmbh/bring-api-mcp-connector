@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Health;
+namespace App\Service\Health;
 
-use App\Domain\Interfaces\HealthCheckInterface;
+use App\Domain\Interface\HealthCheckInterface;
+use App\Domain\Model\HealthResult;
 use App\Security\CredentialCipher;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -22,8 +23,7 @@ use Throwable;
 final readonly class CredentialCipherCheck implements HealthCheckInterface
 {
     public function __construct(
-        #[AutowireLocator([CredentialCipher::class])]
-        private ContainerInterface $locator,
+        #[AutowireLocator([CredentialCipher::class])] private ContainerInterface $locator,
         private LoggerInterface $logger,
     ) {
     }
@@ -50,9 +50,12 @@ final readonly class CredentialCipherCheck implements HealthCheckInterface
                 return HealthResult::failed('health.detail.cipher_roundtrip');
             }
         } catch (Throwable $exception) {
-            $this->logger->error('Credential cipher health check failed: {message}', [
-                'message' => $exception->getMessage(),
-            ]);
+            $this->logger->error(
+                'Credential cipher health check failed: {message}',
+                [
+                    'message' => $exception->getMessage(),
+                ],
+            );
 
             return HealthResult::failed('health.detail.cipher_unusable');
         }

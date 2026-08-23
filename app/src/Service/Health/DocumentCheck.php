@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Health;
+namespace App\Service\Health;
 
-use App\Domain\Interfaces\HealthCheckInterface;
-use App\Legal\LegalDocuments;
-use App\Legal\LegalPage;
-use App\Markdown\MarkdownFile;
+use App\Domain\Config\LegalPage;
+use App\Domain\Interface\HealthCheckInterface;
+use App\Domain\Model\HealthResult;
+use App\Service\LegalDocumentService;
+use App\Service\MarkdownFileService;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 use function implode;
@@ -23,8 +24,8 @@ use function implode;
 final readonly class DocumentCheck implements HealthCheckInterface
 {
     public function __construct(
-        private LegalDocuments $legal,
-        private MarkdownFile $markdown,
+        private LegalDocumentService $legal,
+        private MarkdownFileService $markdown,
         #[Autowire('%app.mail_signature%')] private string $signature,
     ) {
     }

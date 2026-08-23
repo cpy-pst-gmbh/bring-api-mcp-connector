@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\OAuth;
+namespace App\EventSubscriber\OAuth;
 
 use League\Bundle\OAuth2ServerBundle\Event\AccessTokenExtraClaimsResolveEvent;
 use League\Bundle\OAuth2ServerBundle\OAuth2Events;

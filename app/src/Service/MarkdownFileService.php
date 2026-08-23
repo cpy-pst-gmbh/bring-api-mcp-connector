@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Markdown;
+namespace App\Service;
 
 use League\CommonMark\Exception\CommonMarkException;
 use League\CommonMark\GithubFlavoredMarkdownConverter;
@@ -29,7 +29,7 @@ use function str_starts_with;
  * not take down the page or the email that merely decorates itself with the
  * result.
  */
-final readonly class MarkdownFile
+final readonly class MarkdownFileService
 {
     public function __construct(
         #[Autowire('%kernel.project_dir%')] private string $projectDir,
