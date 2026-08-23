@@ -12,10 +12,12 @@ on:
     paths:
       - "app/**"
       - ".github/workflows/app-checks.yml"
+  # Deliberately without a `paths:` filter, unlike the push trigger above: this
+  # job is a required status check on main, and a required check that never
+  # runs is not skipped, it is pending — a pull request outside those paths
+  # would stay unmergeable for good. The wasted minute on an unrelated pull
+  # request is the price of that.
   pull_request:
-    paths:
-      - "app/**"
-      - ".github/workflows/app-checks.yml"
   workflow_dispatch:
 
 jobs:
