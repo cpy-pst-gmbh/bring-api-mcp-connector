@@ -11,9 +11,9 @@
 }
 
 @layer components {
-    /* Turbo marks the document busy for the length of a visit, so the overlay
-       needs no JavaScript of its own — and it covers form submissions and link
-       navigations alike.
+    /* Turbo marks the document and the submitting form busy on its own, so
+       the overlay needs no JavaScript — it covers form submissions and link
+       navigations alike, and it blocks the page rather than only dimming it.
 
        Both states live here rather than starting from a `hidden` class: that
        utility sits in a later layer and would win over this rule. */
@@ -21,8 +21,21 @@
         display: none;
     }
 
-    html[aria-busy="true"] #loading-overlay {
+    /* Turbo sets aria-busy on <html> for a *visit* only. A form submission
+       marks the form alone, so the seconds between the click on "Sign in" and
+       the redirect that ends it left the page fully usable: the progress bar
+       moved, nothing else did. `:has()` closes that gap without JavaScript. */
+    html[aria-busy="true"] #loading-overlay,
+    html:has(form[aria-busy="true"]) #loading-overlay {
         display: grid;
+    }
+
+    /* A modal <dialog> renders in the top layer, above every z-index, so the
+       overlay cannot cover it — and nothing outside it needs covering, the
+       browser makes the rest of the page inert while a modal is open. What
+       stays reachable is the dialog, so the block goes on the form itself. */
+    form[aria-busy="true"] {
+        pointer-events: none;
     }
 
     /* The spinner is motion for its own sake; anyone who asked for less of it

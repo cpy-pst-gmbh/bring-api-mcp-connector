@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Bring\BringApiClient;
-use App\Bring\BringListProvider;
-use App\Bring\BringUnreachableException;
+use App\Domain\Client\BringApiClient;
+use App\Domain\Exception\BringUnreachableException;
 use App\Entity\OAuthClient;
 use App\Entity\User;
+use App\EventSubscriber\OAuth\ConsentSubscriber;
 use App\Form\BringCredentialType;
-use App\OAuth\ConsentSubscriber;
 use App\Repository\OAuthClientRepository;
+use App\Service\BringListService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Attribute\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -47,7 +47,7 @@ final class AccountController extends AbstractController
         EntityManagerInterface $em,
         OAuthClientRepository $clients,
         BringApiClient $bring,
-        BringListProvider $lists,
+        BringListService $lists,
         TranslatorInterface $translator,
         #[Autowire('%app.mcp_endpoint%')] string $mcpEndpoint,
     ): array|Response {
@@ -66,7 +66,7 @@ final class AccountController extends AbstractController
             $password = (string) $credential->getPlainPassword();
 
             try {
-                if (!$bring->verifyCredentials($user->getEmail(), $password)) {
+                if (false === $bring->verifyCredentials($user->getEmail(), $password)) {
                     $form->get('plainPassword')->addError(
                         new FormError($translator->trans('account.password.flash.rejected')),
                     );
@@ -89,7 +89,7 @@ final class AccountController extends AbstractController
 
             // Someone who got here from a connector flow should land back on
             // the consent screen instead of having to start over in Claude.
-            if ($request->getSession()->has(ConsentSubscriber::PENDING_URI)) {
+            if (true === $request->getSession()->has(ConsentSubscriber::PENDING_URI)) {
                 return $this->redirectToRoute('app_consent');
             }
 
@@ -106,7 +106,7 @@ final class AccountController extends AbstractController
         EntityManagerInterface $em,
         Security $security,
     ): Response {
-        if (!$this->isCsrfTokenValid('delete_account', (string) $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('delete_account', $request->request->getString('_token'))) {
             throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
 
@@ -135,7 +135,7 @@ final class AccountController extends AbstractController
         FormInterface $form,
         User $user,
         OAuthClientRepository $clients,
-        BringListProvider $lists,
+        BringListService $lists,
         string $mcpEndpoint,
     ): array {
         $connectors = $clients->findForUser($user);

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 const MCP_BASE_URL = process.env.MCP_BASE_URL ?? 'http://127.0.0.1:8080';
 
@@ -150,6 +150,81 @@ test.describe('login page', () => {
 
         // Telling the two apart would turn this into an account-existence oracle.
         expect(messages[0]).toBe(messages[1]);
+    });
+});
+
+/**
+ * The overlay is driven by the aria-busy attributes Turbo sets on its own, so
+ * the tests set them directly rather than racing a request that is over before
+ * anything can be asserted about it.
+ */
+test.describe('the loading overlay', () => {
+    /**
+     * Whether the keyboard can still reach a field. Focus moves away first:
+     * focus() on the element that already has it is a no-op and would report
+     * everything as reachable.
+     */
+    async function canFocus(page: Page, selector: string): Promise<boolean> {
+        return page.evaluate((target) => {
+            const field = document.querySelector<HTMLElement>(target)!;
+
+            (document.activeElement as HTMLElement | null)?.blur();
+            field.focus();
+
+            return document.activeElement === field;
+        }, selector);
+    }
+
+    test('is out of the way until the document reports itself busy', async ({ page }) => {
+        await page.goto('/login');
+
+        const overlay = page.locator('#loading-overlay');
+
+        await expect(overlay).toHaveCount(1);
+        await expect(overlay).toBeHidden();
+        expect(await canFocus(page, 'input[name="_password"]')).toBe(true);
+
+        // What Turbo sets for the length of a visit.
+        await page.evaluate(() => document.documentElement.setAttribute('aria-busy', 'true'));
+        await expect(overlay).toBeVisible();
+
+        // The overlay stops the mouse; inert is what stops Tab and Enter.
+        await expect(page.locator('body')).toHaveAttribute('inert', '');
+        expect(await canFocus(page, 'input[name="_password"]')).toBe(false);
+
+        await page.evaluate(() => document.documentElement.removeAttribute('aria-busy'));
+        await expect(overlay).toBeHidden();
+        await expect(page.locator('body')).not.toHaveAttribute('inert', '');
+        expect(await canFocus(page, 'input[name="_password"]')).toBe(true);
+    });
+
+    test('also covers a form submission, which never marks the document', async ({ page }) => {
+        await page.goto('/login');
+
+        const overlay = page.locator('#loading-overlay');
+        const form = page.locator('form[action$="/login"]');
+
+        await expect(overlay).toBeHidden();
+
+        // A submission marks the form alone — the document only follows once
+        // the response has turned into a visit.
+        await form.evaluate((element) => element.setAttribute('aria-busy', 'true'));
+        await expect(overlay).toBeVisible();
+
+        await expect(page.locator('body')).toHaveAttribute('inert', '');
+
+        // Neither of those reaches a form inside a modal <dialog>: the overlay
+        // is painted below the top layer, and an open modal is exempt from the
+        // inertness of its ancestors. So the form is blocked in its own right.
+        await expect(form).toHaveCSS('pointer-events', 'none');
+        await expect(form).toHaveAttribute('inert', '');
+        expect(await canFocus(page, 'input[name="_password"]')).toBe(false);
+
+        await form.evaluate((element) => element.removeAttribute('aria-busy'));
+        await expect(overlay).toBeHidden();
+        await expect(page.locator('body')).not.toHaveAttribute('inert', '');
+        await expect(form).not.toHaveAttribute('inert', '');
+        expect(await canFocus(page, 'input[name="_password"]')).toBe(true);
     });
 });
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Bring\BringListProvider;
 use App\Entity\OAuthClient;
 use App\Entity\User;
 use App\Repository\OAuthClientRepository;
+use App\Service\BringListService;
 use League\Bundle\OAuth2ServerBundle\Manager\ClientManagerInterface;
 use League\Bundle\OAuth2ServerBundle\ValueObject\Grant;
 use League\Bundle\OAuth2ServerBundle\ValueObject\RedirectUri;
@@ -38,7 +38,7 @@ final class ConnectorController extends AbstractController
     public function __construct(
         private readonly ClientManagerInterface $clients,
         private readonly OAuthClientRepository $repository,
-        private readonly BringListProvider $lists,
+        private readonly BringListService $lists,
         private readonly TranslatorInterface $translator,
         #[Autowire('%app.connector_redirect_uri%')] private readonly string $redirectUri,
     ) {
@@ -63,7 +63,7 @@ final class ConnectorController extends AbstractController
             return $this->redirectToRoute('app_account');
         }
 
-        $label = trim((string) $request->request->get('label', ''));
+        $label = trim($request->request->getString('label'));
         $label = '' === $label ? 'Claude' : mb_substr($label, 0, 60);
 
         $client = new OAuthClient($label, self::generateIdentifier(), null);

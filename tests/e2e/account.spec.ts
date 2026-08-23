@@ -247,23 +247,6 @@ test.describe('flash messages', () => {
     });
 });
 
-test.describe('the loading overlay', () => {
-    test('is out of the way until the document reports itself busy', async ({ page }) => {
-        const overlay = page.locator('#loading-overlay');
-
-        await expect(overlay).toHaveCount(1);
-        await expect(overlay).toBeHidden();
-
-        // Turbo sets this for the length of a visit; the overlay hangs off it
-        // rather than off any JavaScript of its own.
-        await page.evaluate(() => document.documentElement.setAttribute('aria-busy', 'true'));
-        await expect(overlay).toBeVisible();
-
-        await page.evaluate(() => document.documentElement.removeAttribute('aria-busy'));
-        await expect(overlay).toBeHidden();
-    });
-});
-
 test.describe('every dialog', () => {
     /**
      * Each entry is a way in and the dialog it opens. Checked together because
