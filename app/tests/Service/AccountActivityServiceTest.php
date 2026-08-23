@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Account;
+namespace App\Tests\Service;
 
 use App\Entity\User;
 use App\Service\AccountActivityService;
@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
  * outstanding deletion notice.
  */
 #[CoversClass(AccountActivityService::class)]
-final class ActivityRecorderTest extends TestCase
+final class AccountActivityServiceTest extends TestCase
 {
     public function testAFreshTimestampIsLeftAlone(): void
     {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Doctrine;
+namespace App\Tests\EventListener;
 
 use App\Entity\BringCredential;
 use App\EventListener\BringCredentialListener;

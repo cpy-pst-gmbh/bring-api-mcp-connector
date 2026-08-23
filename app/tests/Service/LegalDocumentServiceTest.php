@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Legal;
+namespace App\Tests\Service;
 
 use App\Domain\Config\LegalPage;
 use App\Service\LegalDocumentService;
@@ -20,7 +20,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * link out rather than take the footer — and with it every page — down.
  */
 #[CoversClass(LegalDocumentService::class)]
-final class LegalDocumentsTest extends TestCase
+final class LegalDocumentServiceTest extends TestCase
 {
     private string $dir;
 

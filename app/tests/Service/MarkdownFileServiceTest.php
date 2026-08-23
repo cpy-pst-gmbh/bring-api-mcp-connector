@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Markdown;
+namespace App\Tests\Service;
 
 use App\Service\MarkdownFileService;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -17,7 +17,7 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
  * signature is not worth an undelivered email.
  */
 #[CoversClass(MarkdownFileService::class)]
-final class MarkdownFileTest extends TestCase
+final class MarkdownFileServiceTest extends TestCase
 {
     private string $dir;
 

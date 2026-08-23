@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Health;
+namespace App\Tests\Service\Health;
 
 use App\Domain\Model\HealthResult;
 use App\Security\CredentialCipher;
