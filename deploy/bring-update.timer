@@ -1,0 +1,23 @@
+# Runs the update once a day.
+#
+# 04:30 UTC is deliberately after the cron container's own maintenance hour
+# (MAINTENANCE_HOUR, 04:00 by default): the daily backup and the account prune
+# have finished, and restarting that container afterwards moves its next slot
+# to tomorrow rather than skipping a day.
+
+[Unit]
+Description=Daily check for new Bring! connector images
+
+[Timer]
+OnCalendar=*-*-* 04:30:00 UTC
+
+# Nothing here is urgent, and an exact time means every machine on this image
+# hits the registry in the same second.
+RandomizedDelaySec=20min
+
+# A machine that was off at 04:30 updates once it is back, rather than waiting
+# for the next day.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

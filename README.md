@@ -154,6 +154,101 @@ because signing in is what creates them — but existing connectors are not, and
 have to be added again in Claude. Delete the old file once you are satisfied
 nothing is missing.
 
+### Updating unattended
+
+`deploy/update.sh` is the manual command above with the three things around it
+that make it safe to run while nobody is watching: a maintenance page, a backup
+taken before the migrations, and a health check that decides whether the page
+comes down again.
+
+```bash
+install -d /var/www/maintenance
+install -m 644 deploy/maintenance/index.html /var/www/maintenance/
+install -m 755 deploy/update.sh /opt/bring-connector/update.sh
+```
+
+Add the maintenance blocks from `deploy/apache-vhosts.conf.example` to both
+vhosts and reload Apache. While `/var/www/maintenance/maintenance.flag` exists,
+every request to either host gets a `503` with `Retry-After`; the app host
+serves the page above with it, the MCP host only the status line, which is all
+Claude acts on. The flag is the entire mechanism, so a window can also be
+opened by hand:
+
+```bash
+/opt/bring-connector/update.sh --on
+```
+
+A run pulls, and stops there unless something actually moved:
+
+1. Compare the image digests before and after the pull. Unchanged means no
+   deployment, and the run is over.
+2. Check that all images carry the same `org.opencontainers.image.revision`.
+   With `IMAGE_TAG=latest` the two build jobs push independently, and a run
+   that lands between them would pair a new app with an old MCP server. A
+   mismatch is skipped rather than deployed — the next run finds them matched.
+3. Raise the maintenance page and let in-flight requests finish.
+4. Back up the database, in the cron container, which owns that volume. A
+   failure here aborts before anything is replaced: a migration is the one step
+   in an update that can lose data, and the copy is worthless afterwards.
+5. `docker compose up -d`, then poll `http://127.0.0.1:8000/health.json`
+   directly — through the proxy everything is a 503 at that moment. It covers
+   both containers, because the app's health page calls the MCP server.
+6. Lower the page. If health never comes back the page **stays up** and the
+   script exits non-zero. Migrations only go forwards, so there is no rollback
+   to fall back to, and "in maintenance until somebody looks" beats "open and
+   broken".
+
+Roll back by pinning `IMAGE_TAG` in `.env` to an older `sha-<commit>` tag and
+pulling that — every build is published under one. A schema change is not
+undone by it.
+
+Then a timer for it:
+
+```bash
+cp deploy/bring-update.{service,timer} /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now bring-update.timer
+```
+
+04:30 UTC, jittered by up to twenty minutes. That is after the cron container's
+own maintenance hour, so the nightly backup and prune have run, and restarting
+that container afterwards moves its next slot to tomorrow instead of skipping a
+day. `journalctl -u bring-update.service` holds the log of every run; a failed
+deploy is a failed unit, so `OnFailure=` in the service file is where mail
+belongs.
+
+### Where the new images come from
+
+The unattended update is the last link of a chain that starts at Dependabot:
+
+```
+dependabot.yml        weekly PRs for composer, pip, both base images,
+                          Playwright and the actions
+  -> app-checks, mcp-checks, e2e     on the pull request
+  -> merged by hand                  a push to main
+  -> build-image.yml                 pushes app and mcp to GHCR
+  -> bring-update.timer              pulls them onto the server that night
+```
+
+Merging is the only manual step, and nothing has to happen after it: the merge
+commit is a push to `main`, which is what `build-image.yml` triggers on. Watch
+it with `gh run watch`, or rebuild any time from the Actions tab —
+`workflow_dispatch` is there for it.
+
+Both Dockerfiles pin a floating base tag, and upstream rebuilds those under the
+same name whenever a system library is patched. Dependabot reports a tag that
+*changed*, so a rebuilt base produces no pull request, no commit and therefore
+no image. `build-image.yml` runs on a weekly schedule for exactly that case,
+with `pull: true` so the base is resolved fresh. GitHub disables scheduled
+workflows in a repository that sees no activity for 60 days; the weekly
+dependency PRs keep this one awake, but it is worth knowing why the images
+would quietly stop refreshing.
+
+Major bumps deserve reading rather than waving through — Symfony 9, or a new
+`bring-api` especially, since it is reverse-engineered and nothing but
+`tools/check-bring-constants.py` and the end-to-end suite stand between a
+changed endpoint and a connector that silently stops adding items.
+
 ### Backing up
 
 The cron container copies the database every night, before it prunes anything,

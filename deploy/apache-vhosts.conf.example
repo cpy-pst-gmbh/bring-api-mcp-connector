@@ -7,7 +7,15 @@
 # infrastructure, not from the user's device, so a certificate is not optional
 # and client certificates at the proxy are not an option either.
 #
-#   a2enmod proxy proxy_http ssl headers rewrite setenvif
+# Both also answer 503 while /var/www/maintenance/maintenance.flag exists.
+# deploy/update.sh creates it before it replaces the containers and removes it
+# once /health is green again, so a deployment is a scheduled pause rather than
+# a proxy error page over a half-migrated database:
+#
+#   install -d /var/www/maintenance
+#   install -m 644 deploy/maintenance/index.html /var/www/maintenance/
+#
+#   a2enmod proxy proxy_http ssl headers rewrite setenvif alias
 #   a2ensite bring-connector
 #   apache2ctl configtest && systemctl reload apache2
 
@@ -37,6 +45,30 @@
     # compose network and nothing outside needs it, so it gets no route at all.
     # This has to stay above the catch-all — first match wins.
     ProxyPass /internal !
+
+    # Served off disk, so it is still there when the containers are not. This
+    # exclusion has to stay above the catch-all as well.
+    ProxyPass /maintenance.html !
+    Alias /maintenance.html /var/www/maintenance/index.html
+
+    <Directory /var/www/maintenance>
+        Require all granted
+    </Directory>
+
+    ErrorDocument 503 /maintenance.html
+
+    RewriteEngine On
+
+    # Everything gets the page, /maintenance.html included would be a loop.
+    # The ACME challenge needs no exception: certbot answers it on port 80,
+    # which this block does not cover.
+    RewriteCond /var/www/maintenance/maintenance.flag -f
+    RewriteCond %{REQUEST_URI} !^/maintenance\.html$
+    RewriteRule ^ - [R=503,L]
+
+    # A 503 without Retry-After reads as "gone" to a crawler and to Claude's
+    # connector alike; with one it reads as "later", which is what it is.
+    Header always set Retry-After "120" "expr=%{REQUEST_STATUS} == 503"
 
     ProxyPreserveHost On
     ProxyPass        / http://127.0.0.1:8000/
@@ -72,6 +104,15 @@
     SSLCertificateKeyFile /etc/letsencrypt/live/bring.mcp.cpy-pst.de/privkey.pem
 
     ProxyPreserveHost On
+
+    # Same window as the app vhost, same flag file, but no ErrorDocument: the
+    # only client here is Claude, an HTML body would be noise in a log, and the
+    # status line is the whole of what it acts on.
+    RewriteEngine On
+    RewriteCond /var/www/maintenance/maintenance.flag -f
+    RewriteRule ^ - [R=503,L]
+
+    Header always set Retry-After "120" "expr=%{REQUEST_STATUS} == 503"
 
     # flushpackets=on, or the proxy collects the Streamable HTTP response until
     # it is complete and Claude waits on a stream that never arrives in pieces.

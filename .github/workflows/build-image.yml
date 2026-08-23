@@ -4,6 +4,15 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+
+  # Both Dockerfiles pin a floating base tag, and upstream rebuilds those under
+  # the same name whenever a system library is patched. Dependabot only reports
+  # a tag that changed, so on its own a rebuilt base never reaches the server:
+  # no pull request, no commit, no build. Sunday night, so a fixed image is
+  # already there when the Monday dependency updates arrive.
+  schedule:
+    - cron: "0 3 * * 0"
+
   workflow_dispatch:
 
 env:
@@ -56,6 +65,9 @@ jobs:
         with:
           context: ./${{ matrix.component }}
           push: true
+          # The point of the scheduled run. Explicit rather than relying on how
+          # buildx happens to resolve a tag it has seen before.
+          pull: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.component }}

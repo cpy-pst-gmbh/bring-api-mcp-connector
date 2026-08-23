@@ -1,0 +1,30 @@
+# Unattended update, run by bring-update.timer.
+#
+#   cp bring-update.{service,timer} /etc/systemd/system/
+#   systemctl daemon-reload
+#   systemctl enable --now bring-update.timer
+#   systemctl list-timers bring-update.timer
+#
+# Adjust WorkingDirectory and ExecStart if the stack does not live in
+# /opt/bring-connector.
+
+[Unit]
+Description=Update the Bring! connector stack
+Documentation=https://github.com/cpy-pst-gmbh/bring-api-mcp-connector
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/bring-connector
+ExecStart=/opt/bring-connector/update.sh
+
+# Pull, migrate and health check, with room for a slow registry. The script
+# holds its own lock, so a run that outlives the interval blocks the next one
+# instead of colliding with it.
+TimeoutStartSec=30min
+
+# A failed deploy leaves the maintenance page up — that is the safe state, but
+# it is also a silent one. Point this at a unit that sends mail, or drop the
+# line and watch `systemctl status` instead.
+#OnFailure=status-mail@%n.service
