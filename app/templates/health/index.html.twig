@@ -1,0 +1,68 @@
+{#
+  Standalone on purpose: extending base.html.twig would pull in the navigation,
+  the flash region and the JavaScript importmap. A status page loads when things
+  are broken, so it depends on as little as possible — and reading flashes would
+  start a session, which this endpoint avoids.
+#}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noindex">
+        <title>{{ (healthy ? 'health.title_ok' : 'health.title_failed')|trans }}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>{{ healthy ? '🟢' : '🔴' }}</text></svg>">
+        <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+    </head>
+    <body class="flex h-full flex-col bg-slate-50 text-slate-900 antialiased">
+        <main class="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
+            <p class="text-sm font-medium text-slate-500">{{ 'app.name'|trans }}</p>
+
+            <div class="mt-3 flex flex-wrap items-center gap-3">
+                <span class="inline-flex size-3 rounded-full {{ healthy ? 'bg-emerald-500' : 'bg-red-500' }}"
+                      aria-hidden="true"></span>
+                <h1 class="text-2xl font-semibold tracking-tight">
+                    {{ (healthy ? 'health.heading_ok' : 'health.heading_failed')|trans }}
+                </h1>
+            </div>
+
+            <p class="mt-2 text-sm text-slate-500">
+                {{ 'health.checked_at'|trans({
+                    '%date%': checked_at|date('Y-m-d H:i:s'),
+                    '%status%': healthy ? '200' : '503',
+                }) }}
+            </p>
+
+            <ul class="mt-8 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+                {% for check in checks %}
+                    {% set result = check.result %}
+                    <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-6 py-4">
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-slate-900">{{ check.label|trans }}</p>
+                            {% if result.detail %}
+                                <p class="mt-0.5 text-sm text-slate-500">
+                                    {{ result.detail|trans(result.detailParameters) }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        {% set tone = {
+                            'ok': 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+                            'failed': 'bg-red-50 text-red-700 ring-red-200',
+                            'skipped': 'bg-slate-50 text-slate-500 ring-slate-200',
+                        } %}
+                        <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset {{ tone[result.status] }}">
+                            {{ ('health.status.' ~ result.status)|trans }}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <p class="mt-6 text-sm text-slate-500">
+                {{ 'health.as_json'|trans }}
+                <a href="{{ path('app_health', {_format: 'json'}) }}"
+                   class="font-medium text-slate-700 underline underline-offset-4">/health.json</a>
+            </p>
+        </main>
+    </body>
+</html>

@@ -1,0 +1,67 @@
+security:
+    # No password_hashers: accounts have no local password. Bring! verifies the
+    # one the user types, and the login link covers everything else. The OAuth2
+    # bundle hashes client secrets with its own service.
+
+    providers:
+        app_users:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_profiler|_wdt|assets|build)/
+            security: false
+
+        # The token endpoint authenticates by client credentials and PKCE
+        # verifier, not by session. Keeping it out of the main firewall stops
+        # Symfony from starting a session for Anthropic's back-channel calls.
+        # /health is here for the same reason: a monitor polling it every
+        # minute should not accumulate sessions.
+        # The optional format suffix has to be in the pattern, or /health.json
+        # slips into the main firewall and gets a session after all.
+        stateless_endpoints:
+            pattern: ^/(token|device-code|health(\.[a-z]+)?)$
+            security: false
+
+        # Called by the MCP server with the user's own access token. Must be
+        # declared before "main" so its pattern wins.
+        internal:
+            pattern: ^/internal
+            stateless: true
+            provider: app_users
+            oauth2: true
+
+        main:
+            lazy: true
+            provider: app_users
+            custom_authenticators:
+                - App\Security\BringLoginAuthenticator
+            # Every attempt goes to Bring!, so an unthrottled form is both a
+            # password-guessing oracle and a way to hammer someone else's API.
+            # The listener counts per username+IP and, five times looser, per IP
+            # alone, so one address cannot lock out a whole household.
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+            login_link:
+                check_route: app_login_link_check
+                # A link stops working once the address it was sent to changes.
+                signature_properties: ['id', 'email']
+                lifetime: 900
+                max_uses: 1
+                success_handler: App\Security\LoginLinkSuccessHandler
+            logout:
+                path: app_logout
+                target: app_home
+
+    access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/$, roles: PUBLIC_ACCESS }
+        # /authorize is the connector's entry point: an anonymous visitor gets
+        # sent to the login form and lands back here afterwards.
+        - { path: ^/authorize, roles: ROLE_USER }
+        - { path: ^/consent, roles: ROLE_USER }
+        - { path: ^/account, roles: ROLE_USER }
+        - { path: ^/internal, roles: ROLE_OAUTH2_BRING }

@@ -1,0 +1,11 @@
+<p>{{ 'email.inactivity.greeting'|trans }}</p>
+
+<p>{{ 'email.inactivity.lead'|trans({'%date%': last_active_at|date('Y-m-d')}) }}</p>
+
+<p>{{ 'email.inactivity.deadline'|trans({'%date%': deadline|date('Y-m-d')}) }}</p>
+
+<p>{{ 'email.inactivity.keep'|trans }}</p>
+
+<p><a href="{{ login_url }}">{{ 'email.inactivity.action'|trans }}</a></p>
+
+<p>{{ 'email.inactivity.contents'|trans }}</p>

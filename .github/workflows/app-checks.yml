@@ -1,0 +1,59 @@
+name: App checks
+
+# Everything that needs a PHP and a composer install, in one job: the install
+# is by far the slowest part, and running it twice to keep two workflows apart
+# buys nothing. The Python, Docker and Playwright checks stay separate — they
+# need a different runtime and answer to different paths.
+on:
+  # push is limited to main, or a push to a branch with an open pull request
+  # matches both triggers and everything runs twice for one commit.
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/app-checks.yml"
+  pull_request:
+    paths:
+      - "app/**"
+      - ".github/workflows/app-checks.yml"
+  workflow_dispatch:
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          # sodium encrypts the stored passwords, pdo_sqlite backs the
+          # repository tests. The rest are what composer.json asks for.
+          extensions: ctype, iconv, openssl, sodium, pdo_sqlite
+          coverage: none
+
+      - name: Install dependencies
+        working-directory: app
+        # Nothing here boots the kernel, so the post-install scripts — cache
+        # warmup, asset install — have no work to do and only add ways to fail.
+        run: composer install --no-interaction --no-progress --no-scripts
+
+      # The suite covers what the browser tests cannot see from the outside:
+      # the credential cipher, the dormant-account policy, the backup, and the
+      # pieces that have to fail quietly rather than throw.
+      - name: Unit tests
+        working-directory: app
+        run: bin/phpunit
+
+      # Runs even when the tests failed. Style and correctness are independent
+      # problems, and finding out about them one push at a time is the whole
+      # cost this workflow was meant to avoid.
+      - name: Coding standard
+        if: '!cancelled()'
+        working-directory: app
+        # No cache: a fresh checkout has nothing to reuse, and a stale cache
+        # entry reports a file that is in fact clean.
+        run: vendor/bin/php-cs-fixer check --diff --using-cache=no --show-progress=none

@@ -1,0 +1,97 @@
+# Reverse proxy for the Bring! connector, one Docker host, two names:
+#
+#   bring.app.cpy-pst.de  ->  Symfony   127.0.0.1:8000
+#   bring.mcp.cpy-pst.de  ->  FastMCP   127.0.0.1:8080
+#
+# Both have to be HTTPS. Anthropic calls the MCP endpoint from their own
+# infrastructure, not from the user's device, so a certificate is not optional
+# and client certificates at the proxy are not an option either.
+#
+#   a2enmod proxy proxy_http ssl headers rewrite setenvif
+#   a2ensite bring-connector
+#   apache2ctl configtest && systemctl reload apache2
+
+# --- bring.app.cpy-pst.de : Symfony ----------------------------------------
+
+<VirtualHost *:80>
+    ServerName bring.app.cpy-pst.de
+
+    # certbot answers the challenge from the webroot. Everything else moves to
+    # HTTPS; the challenge path must not, or renewals break.
+    Alias /.well-known/acme-challenge /var/www/html/.well-known/acme-challenge
+
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+    RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [R=301,L]
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName bring.app.cpy-pst.de
+
+    SSLEngine on
+    SSLCertificateFile    /etc/letsencrypt/live/bring.app.cpy-pst.de/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/bring.app.cpy-pst.de/privkey.pem
+
+    # /internal/bring-credentials hands out decrypted Bring! passwords to
+    # whoever holds a valid access token. The MCP container reaches it over the
+    # compose network and nothing outside needs it, so it gets no route at all.
+    # This has to stay above the catch-all — first match wins.
+    ProxyPass /internal !
+
+    ProxyPreserveHost On
+    ProxyPass        / http://127.0.0.1:8000/
+    ProxyPassReverse / http://127.0.0.1:8000/
+
+    # mod_proxy_http forwards X-Forwarded-For and -Host but not -Proto. Without
+    # it Symfony sees a plain HTTP request and writes http:// into the
+    # discovery documents and the sign-in links — addresses Claude cannot use.
+    # Only meaningful together with TRUSTED_PROXIES in the container.
+    RequestHeader set X-Forwarded-Proto "https"
+
+    ErrorLog  ${APACHE_LOG_DIR}/bring-app-error.log
+    CustomLog ${APACHE_LOG_DIR}/bring-app-access.log combined
+</VirtualHost>
+
+# --- bring.mcp.cpy-pst.de : FastMCP -----------------------------------------
+
+<VirtualHost *:80>
+    ServerName bring.mcp.cpy-pst.de
+
+    Alias /.well-known/acme-challenge /var/www/html/.well-known/acme-challenge
+
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+    RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [R=301,L]
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName bring.mcp.cpy-pst.de
+
+    SSLEngine on
+    SSLCertificateFile    /etc/letsencrypt/live/bring.mcp.cpy-pst.de/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/bring.mcp.cpy-pst.de/privkey.pem
+
+    ProxyPreserveHost On
+
+    # flushpackets=on, or the proxy collects the Streamable HTTP response until
+    # it is complete and Claude waits on a stream that never arrives in pieces.
+    # timeout is raised for the same reason: the connection stays open between
+    # messages and the 60 s default would cut it. Specific rule before the
+    # catch-all.
+    ProxyPass        /mcp http://127.0.0.1:8080/mcp flushpackets=on timeout=600
+    ProxyPassReverse /mcp http://127.0.0.1:8080/mcp
+
+    # /.well-known/oauth-protected-resource/mcp lives here (RFC 9728) — it is
+    # what points Claude at the authorization server on the other host.
+    ProxyPass        / http://127.0.0.1:8080/
+    ProxyPassReverse / http://127.0.0.1:8080/
+
+    RequestHeader set X-Forwarded-Proto "https"
+
+    # mod_deflate buffers to build a compressed body, which defeats
+    # flushpackets. Compressing a stream saves nothing anyway.
+    SetEnvIf Request_URI ^/mcp no-gzip=1
+
+    ErrorLog  ${APACHE_LOG_DIR}/bring-mcp-error.log
+    CustomLog ${APACHE_LOG_DIR}/bring-mcp-access.log combined
+</VirtualHost>
