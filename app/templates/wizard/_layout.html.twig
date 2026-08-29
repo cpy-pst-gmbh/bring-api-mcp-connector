@@ -13,40 +13,40 @@
 ] %}
 
 <div>
-    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div class="grid md:grid-cols-[1fr_18rem]">
-            <div class="p-6 sm:p-8">
+    <div class="overflow-hidden rounded-card bg-white shadow-e3">
+        <div class="grid md:grid-cols-[1fr_19rem]">
+            <div class="p-8 sm:p-10">
                 {% block form %}{% endblock %}
             </div>
 
             {# order-first puts the steps between the header and the form on a
                narrow screen; from md up the grid places them in the right
                column and the DOM order applies again. #}
-            <aside class="order-first border-b border-slate-200 bg-slate-50 p-6 sm:p-8 md:order-none md:border-b-0 md:border-l"
+            <aside class="order-first bg-sage-100 p-8 sm:p-10 md:order-none"
                    aria-label="{{ 'wizard.steps_label'|trans }}">
-                <ol class="space-y-6">
+                <ol class="space-y-7">
                     {% for step in steps %}
                         {% set is_current = step.number == current_step %}
                         {% set is_done = step.number < current_step %}
 
-                        <li class="flex gap-3 {{ is_current ? '' : 'opacity-45' }}"
+                        <li class="flex gap-3.5 {{ is_current ? '' : 'opacity-50' }}"
                             {{ is_current ? 'aria-current="step"' : '' }}>
-                            <span class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold
+                            <span class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-control text-sm font-bold
                                          {{ is_current
-                                            ? 'bg-slate-900 text-white'
-                                            : (is_done ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600') }}">
+                                            ? 'bg-pink text-white shadow-chip'
+                                            : 'bg-white text-ink-500 shadow-e1' }}">
                                 {% if is_done %}
-                                    {{ include('icon/check.html.twig', {class: 'size-4'}) }}
+                                    {{ include('icon/check.html.twig', {class: 'size-4 text-ink'}) }}
                                 {% else %}
                                     {{ step.number }}
                                 {% endif %}
                             </span>
 
                             <div class="min-w-0">
-                                <p class="text-sm font-medium text-slate-900">
+                                <p class="text-[15px] font-bold text-ink">
                                     {{ ('wizard.step.' ~ step.key ~ '.title')|trans }}
                                 </p>
-                                <p class="mt-1 text-sm text-slate-500">
+                                <p class="mt-1.5 text-[15px] leading-normal text-ink-500">
                                     {{ ('wizard.step.' ~ step.key ~ '.description')|trans }}
                                 </p>
                             </div>

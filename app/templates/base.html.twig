@@ -4,7 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}{{ 'app.name'|trans }}{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🛒</text></svg>">
+        <link rel="icon" href="/favicon.ico" sizes="16x16">
 
         {% block stylesheets %}{% endblock %}
 
@@ -12,53 +12,76 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    {# The card is the page. Header and footer are plain centred lines above and
-       below it rather than bars of their own, so nothing competes with it. #}
+    {# The card is the page. Header and footer are plain lines above and below
+       it rather than bars of their own, so nothing competes with it. #}
     {# The body is what the loading overlay locks, so the controller that sets
        `inert` sits on it. Turbo swaps this element during a visit, which
        reconnects the controller with a clean slate. #}
     <body data-controller="busy"
-          class="flex min-h-full flex-col items-center justify-center gap-6 bg-slate-50 px-4 py-10 text-slate-900 antialiased">
-        <header class="w-full max-w-3xl text-center">
-            <a href="{{ path('app_home') }}" class="inline-flex items-center gap-2 font-semibold tracking-tight">
-                <span aria-hidden="true">🛒</span>
-                {{ 'app.name'|trans }}
-            </a>
-
-            {% if app.user %}
-                <p class="mt-1 text-sm text-slate-500">
-                    {{ app.user.userIdentifier }} ·
-                    <a href="{{ path('app_logout') }}" class="font-medium text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline">
-                        {{ 'app.sign_out'|trans }}
+          class="flex min-h-full flex-col items-center bg-tint px-6 py-14 text-ink antialiased">
+        {# Header, card and the disclaimer travel together and stay centred in
+           whatever height is left over; the legal links and the sign-off sit at
+           the foot of the viewport, which is where a reader looks for them. #}
+        <div class="flex w-full flex-1 flex-col items-center justify-center gap-4">
+            <header class="w-full max-w-3xl">
+                <div class="flex flex-wrap items-center justify-between gap-x-5 gap-y-2">
+                    {# The mark is the product name — no second lockup beside it.
+                       It is decorative in the markup, so the link carries the
+                       accessible name. #}
+                    <a href="{{ path('app_home') }}" class="inline-block"
+                       aria-label="{{ 'app.name'|trans }}">
+                        {{ include('brand/_logo.html.twig') }}
                     </a>
-                </p>
-            {% endif %}
-        </header>
 
-        <main class="w-full max-w-3xl">
-            {% block body %}{% endblock %}
-        </main>
+                    {% if app.user %}
+                        <p class="text-[15px] text-ink-500">
+                            {{ app.user.userIdentifier }} ·
+                            <a href="{{ path('app_logout') }}"
+                               class="font-medium text-ink transition-colors duration-300 hover:text-pink">
+                                {{ 'app.sign_out'|trans }}
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+            </header>
 
-        <footer class="w-full max-w-3xl text-center text-xs text-slate-500">
-            <p>{{ 'app.disclaimer'|trans }}</p>
+            <main class="w-full max-w-3xl">
+                {% block body %}{% endblock %}
+            </main>
 
+            {# Belongs with the card, not with the footer: it qualifies what the
+               thing above it does. #}
+            <p class="w-full max-w-3xl text-center text-sm text-ink-500">
+                {{ 'app.disclaimer'|trans }}
+            </p>
+        </div>
+
+        {# mt-10 only matters when the page is taller than the viewport and there
+           is no free space left for the flex row above to absorb. #}
+        <footer class="mt-10 w-full max-w-3xl text-center text-sm text-ink-500">
             {% set privacy_href = legal.privacyPolicyHref %}
             {% set imprint_href = legal.imprintHref %}
 
             {% if privacy_href or imprint_href %}
-                <nav class="mt-1 flex justify-center gap-4">
+                <nav class="flex justify-center gap-5">
                     {% if privacy_href %}
-                        <a href="{{ privacy_href }}" class="underline-offset-4 hover:text-slate-900 hover:underline">
+                        <a href="{{ privacy_href }}" class="transition-colors duration-300 hover:text-pink">
                             {{ 'app.privacy_policy'|trans }}
                         </a>
                     {% endif %}
                     {% if imprint_href %}
-                        <a href="{{ imprint_href }}" class="underline-offset-4 hover:text-slate-900 hover:underline">
+                        <a href="{{ imprint_href }}" class="transition-colors duration-300 hover:text-pink">
                             {{ 'app.imprint'|trans }}
                         </a>
                     {% endif %}
                 </nav>
             {% endif %}
+
+            {# The brand's sign-off, and the only pictorial character it uses.
+               Everything else on the page is text. #}
+            <p class="mt-2.5">
+                {{ 'app.made_by'|trans({'%heart%': '<span class="text-pink">&#x2764;</span>'})|raw }}
+            </p>
         </footer>
 
         {# Out of the flow on purpose: a message that appears between the
@@ -71,9 +94,9 @@
                     <div data-controller="toast"
                          data-toast-delay-value="{{ label == 'error' ? 10000 : 5000 }}"
                          data-action="click->toast#dismiss"
-                         class="pointer-events-auto w-full max-w-md cursor-pointer rounded-lg border px-4 py-3 text-sm shadow-lg transition duration-300 {{ label == 'success'
-                             ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                             : 'border-red-200 bg-red-50 text-red-800' }}">
+                         class="pointer-events-auto w-full max-w-md cursor-pointer rounded-action px-5 py-4 text-[15px] shadow-dialog transition duration-300 {{ label == 'success'
+                             ? 'bg-white text-ink'
+                             : 'bg-pink-100 text-pink-700' }}">
                         {{ message|trans }}
                     </div>
                 {% endfor %}
@@ -84,9 +107,15 @@
            duration of a visit. aria-hidden because a screen reader already
            learns about the busy state from that attribute. #}
         <div id="loading-overlay" aria-hidden="true"
-             class="fixed inset-0 z-50 place-items-center bg-slate-50/70 backdrop-blur-[1px]">
-            <span data-spinner
-                  class="size-8 animate-spin rounded-full border-4 border-slate-300 border-t-slate-900"></span>
+             class="fixed inset-0 z-50 place-items-center bg-tint/70">
+            {# Three squares fading in turn. The brand animates colour and
+               opacity and nothing else, so a rotating spinner is out — that is
+               the one motion rule the "fluffy" pass does not relax. #}
+            <span data-spinner class="flex gap-2">
+                <span class="size-3 rounded-control bg-pink"></span>
+                <span class="size-3 rounded-control bg-pink"></span>
+                <span class="size-3 rounded-control bg-pink"></span>
+            </span>
         </div>
     </body>
 </html>

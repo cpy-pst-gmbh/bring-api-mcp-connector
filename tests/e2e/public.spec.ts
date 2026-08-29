@@ -69,7 +69,7 @@ async function failLogin(page: import('@playwright/test').Page, email: string): 
     await page.locator('input[name="_password"]').fill('definitely-not-a-password');
     await page.getByRole('button', { name: 'Sign in' }).click();
 
-    const message = page.locator('.bg-red-50').first();
+    const message = page.locator('.bg-pink-100').first();
     await expect(message).toBeVisible();
 
     return (await message.innerText()).trim();
@@ -84,8 +84,8 @@ test.describe('login page', () => {
         await expect(page.locator('li[aria-current="step"]')).toContainText('Sign in with Bring!');
 
         // The two steps still to come are visible but held back.
-        await expect(steps.nth(1)).toHaveClass(/opacity-45/);
-        await expect(steps.nth(2)).toHaveClass(/opacity-45/);
+        await expect(steps.nth(1)).toHaveClass(/opacity-50/);
+        await expect(steps.nth(2)).toHaveClass(/opacity-50/);
     });
 
     test('offers both the password form and the link fallback', async ({ page }) => {
