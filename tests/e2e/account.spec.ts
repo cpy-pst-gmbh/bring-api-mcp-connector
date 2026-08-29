@@ -28,14 +28,14 @@ async function currentStep(page: Page): Promise<string> {
 }
 
 /**
- * Adds one connector through whichever form the current step offers, and
- * returns its client ID.
+ * Submits the create-connector form through whichever shape the current step
+ * offers, and leaves the page that answers on screen — flash included.
  *
- * The ID is read back off the page rather than out of the flash message: Turbo
- * swaps the body asynchronously, and two consecutive creations produce flashes
- * that look alike, so reading the flash can return the previous one.
+ * Split out of `addConnector` because a flash survives exactly one render. Any
+ * further navigation shows a page without it, so a test that wants to see the
+ * toast has to stop here.
  */
-async function addConnector(page: Page, name: string): Promise<string> {
+async function submitConnector(page: Page, name: string): Promise<void> {
     const inModal = (await page.getByRole('button', { name: 'Add another connector' }).count()) > 0;
 
     if (inModal) {
@@ -46,6 +46,18 @@ async function addConnector(page: Page, name: string): Promise<string> {
 
     await scope.locator('input[name="label"]').fill(name);
     await scope.getByRole('button', { name: 'Create', exact: true }).click();
+}
+
+/**
+ * Adds one connector and returns its client ID.
+ *
+ * The ID is read back off the page rather than out of the flash message: Turbo
+ * swaps the body asynchronously, and two consecutive creations produce flashes
+ * that look alike, so reading the flash can return the previous one. Reading it
+ * back navigates, which is why this is no use to the flash tests.
+ */
+async function addConnector(page: Page, name: string): Promise<string> {
+    await submitConnector(page, name);
 
     return clientIdFor(page, name);
 }
@@ -57,10 +69,18 @@ async function clientIdFor(page: Page, name: string): Promise<string> {
     const chooser = page.locator('#connector-select');
 
     if ((await chooser.count()) > 0) {
+        // The option carries the identifier the page will show once the
+        // selection has been applied.
+        const wanted = await chooser.locator('option').filter({ hasText: name }).getAttribute('value');
+
         await chooser.selectOption({ label: name });
-        // Changing it navigates, so wait for the page that answers.
-        await expect(chooser).toHaveValue(/claude-/);
-        await expect(page.locator('#client-id')).toBeVisible();
+
+        // Changing it navigates, and waiting for the select to hold a
+        // `claude-` value or for #client-id to be visible proves nothing: both
+        // are already true on the page being replaced, so the read below could
+        // return the previous connector's ID. Waiting for this connector's ID
+        // is the only assertion the old page cannot satisfy.
+        await expect(page.locator('#client-id')).toHaveText(wanted!);
     }
 
     return (await page.locator('#client-id').innerText()).trim();
@@ -224,7 +244,9 @@ test.describe('the connector dialog', () => {
 
 test.describe('flash messages', () => {
     test('arrive as a toast that leaves on its own', async ({ page }) => {
-        await addConnector(page, 'Playwright');
+        // Not addConnector: reading the ID back navigates, and the flash is
+        // gone from the page after that.
+        await submitConnector(page, 'Playwright');
 
         const toast = page.locator('[data-controller="toast"]').first();
         await expect(toast).toBeVisible();
@@ -237,7 +259,7 @@ test.describe('flash messages', () => {
     });
 
     test('can be dismissed by clicking', async ({ page }) => {
-        await addConnector(page, 'Playwright');
+        await submitConnector(page, 'Playwright');
 
         const toast = page.locator('[data-controller="toast"]').first();
         await expect(toast).toBeVisible();
