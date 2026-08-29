@@ -1,8 +1,15 @@
-{# Tailwind styling layered on top of the default form layout. #}
+{#
+  CPY PST styling layered on top of the default form layout.
+
+  The widget class string is the same one the hand-written forms carry in
+  `security/login.html.twig` and `account/_connector_form.html.twig`.
+#}
 {% use 'form_div_layout.html.twig' %}
 
 {% block form_row %}
-    <div class="mb-5">
+    {# Collapses against the mt-7 of a following actions row, so a single-field
+       form does not end up with both. #}
+    <div class="mb-6">
         {{- form_label(form) -}}
         {{- form_widget(form) -}}
         {{- form_help(form) -}}
@@ -12,15 +19,19 @@
 
 {% block form_label -%}
     {%- set label_attr = label_attr|merge({
-        class: (label_attr.class|default('') ~ ' mb-1 block text-sm font-medium text-slate-700')|trim
+        class: (label_attr.class|default('') ~ ' mb-2 block text-[15px] font-medium text-ink')|trim
     }) -%}
     {{- parent() -}}
 {%- endblock %}
 
 {% block form_widget_simple -%}
+    {#- The class list sits inside the block, not at template level: Symfony
+        renders a form theme block on its own, never the template body, so a
+        top-level `set` would never run and the variable would not exist. -#}
+    {%- set field_class = 'block w-full rounded-control border border-ink-100 bg-white px-4 py-3.5 text-base text-ink shadow-inset-field outline-none placeholder:text-ink-300 focus:border-pink focus:ring-2 focus:ring-pink-100' -%}
     {%- if 'hidden' != (type|default('text')) -%}
         {%- set attr = attr|merge({
-            class: (attr.class|default('') ~ ' block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-xs outline-none placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200')|trim
+            class: (attr.class|default('') ~ ' ' ~ field_class)|trim
         }) -%}
     {%- endif -%}
     {{- parent() -}}
@@ -28,14 +39,15 @@
 
 {% block form_help -%}
     {%- set help_attr = help_attr|merge({
-        class: (help_attr.class|default('') ~ ' mt-1.5 text-sm text-slate-500')|trim
+        class: (help_attr.class|default('') ~ ' mt-2.5 text-[15px] leading-normal text-ink-500')|trim
     }) -%}
     {{- parent() -}}
 {%- endblock %}
 
 {% block form_errors -%}
     {%- if errors|length > 0 -%}
-        <ul class="mt-1.5 space-y-1 text-sm text-red-600">
+        {# The brand has no red; pink is the alert colour in this palette. #}
+        <ul class="mt-2.5 space-y-1 text-[15px] text-pink-700">
             {%- for error in errors -%}
                 <li>{{ error.message }}</li>
             {%- endfor -%}

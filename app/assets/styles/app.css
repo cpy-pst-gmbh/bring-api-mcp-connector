@@ -1,5 +1,81 @@
 @import "tailwindcss";
 
+/* CPY PST brand theme.
+   Palette, Inter and the elevation scale come from the design system; the
+   shadows and the larger radii are the deliberate "fluffy" addition — the
+   brand source itself is flat and uses 0.25rem everywhere. */
+@theme {
+    /* Tailwind's default palette is cleared on purpose. The handoff says not to
+       reintroduce `slate-*`; this makes that a property of the build rather
+       than a rule to remember — a stray `bg-slate-50` simply stops producing
+       any rule instead of quietly adding a fifth colour to the brand. */
+    --color-*: initial;
+
+    --color-transparent: transparent;
+    --color-current: currentColor;
+    --color-inherit: inherit;
+    --color-white: #fff;
+    --color-black: #000;
+
+    --font-sans: 'Inter', Helvetica, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --color-ink: #262730;
+    --color-ink-700: #3d3e48;
+    --color-ink-500: #6b6c74;
+    --color-ink-300: #a8a9ae;
+    --color-ink-100: #dcdcde;
+
+    --color-pink: #ff7b9c;
+    --color-pink-700: #e05b7e;
+    --color-pink-300: #ffb0c3;
+    --color-pink-100: #ffe5ec;
+
+    --color-sage: #a1b0ab;
+    --color-sage-100: #ecefee;
+
+    --color-tint: #f3f3f3;
+    --color-highlight: #f3e600;
+
+    --radius-control: 12px;
+    --radius-action: 14px;
+    --radius-card: 24px;
+
+    --shadow-e1: 0 1px 2px rgba(38, 39, 48, .08);
+    --shadow-e2: 0 2px 4px rgba(38, 39, 48, .06), 0 12px 28px -12px rgba(38, 39, 48, .18);
+    --shadow-e3: 0 2px 4px rgba(38, 39, 48, .06), 0 18px 40px -16px rgba(38, 39, 48, .22), 0 48px 72px -48px rgba(38, 39, 48, .2);
+    --shadow-dialog: 0 2px 4px rgba(38, 39, 48, .06), 0 24px 48px -16px rgba(38, 39, 48, .35);
+    --shadow-pink: 0 2px 4px rgba(38, 39, 48, .06), 0 10px 20px -8px rgba(255, 123, 156, .55);
+    --shadow-chip: 0 2px 4px rgba(38, 39, 48, .06), 0 8px 16px -8px rgba(255, 123, 156, .6);
+    --shadow-inset-field: inset 0 1px 2px rgba(38, 39, 48, .06);
+}
+
+/* Inter, self-hosted. Copy the three woff2 from the design system into
+   app/assets/fonts/ (asset mapper serves them from there). */
+@font-face {
+    font-display: swap;
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../fonts/inter-v20-latin-regular.woff2') format('woff2');
+}
+
+@font-face {
+    font-display: swap;
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    src: url('../fonts/inter-v20-latin-500.woff2') format('woff2');
+}
+
+@font-face {
+    font-display: swap;
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 700;
+    src: url('../fonts/inter-v20-latin-700.woff2') format('woff2');
+}
+
 @layer base {
     /* Tailwind v4 dropped the preflight rule that gave buttons a pointer
        cursor — v3 still shipped it. Restoring it here beats repeating the
@@ -38,11 +114,38 @@
         pointer-events: none;
     }
 
-    /* The spinner is motion for its own sake; anyone who asked for less of it
-       still gets the block, just without the turning. */
+    /* The brand allows motion on colour and opacity and nothing else, which
+       rules out a rotating spinner — the one motion rule the "fluffy" pass
+       does not relax. Three squares fade in turn instead. */
+    #loading-overlay [data-spinner] span {
+        animation: pulse 1.2s ease infinite;
+    }
+
+    #loading-overlay [data-spinner] span:nth-child(2) {
+        animation-delay: .2s;
+    }
+
+    #loading-overlay [data-spinner] span:nth-child(3) {
+        animation-delay: .4s;
+    }
+
+    @keyframes pulse {
+        0%,
+        100% {
+            opacity: .2;
+        }
+
+        50% {
+            opacity: 1;
+        }
+    }
+
+    /* The indicator is motion for its own sake; anyone who asked for less of it
+       still gets the block, just without the fading. */
     @media (prefers-reduced-motion: reduce) {
-        #loading-overlay [data-spinner] {
+        #loading-overlay [data-spinner] span {
             animation: none;
+            opacity: .6;
         }
     }
 }
@@ -53,7 +156,7 @@
        usual answer, but it needs npm and this project builds the CSS with the
        standalone binary. */
     .legal {
-        color: var(--color-slate-700);
+        color: var(--color-ink-700);
         line-height: 1.7;
     }
 
@@ -68,24 +171,24 @@
     .legal h1,
     .legal h2,
     .legal h3 {
-        color: var(--color-slate-900);
-        font-weight: 600;
-        letter-spacing: -0.015em;
+        color: var(--color-ink);
+        font-weight: 700;
+        letter-spacing: -0.01em;
     }
 
     .legal h1 {
-        font-size: 1.5rem;
+        font-size: 1.625rem;
         margin-bottom: 1rem;
     }
 
     .legal h2 {
-        font-size: 1.125rem;
+        font-size: 1.25rem;
         margin-top: 2rem;
         margin-bottom: 0.5rem;
     }
 
     .legal h3 {
-        font-size: 1rem;
+        font-size: 1.0625rem;
         margin-top: 1.5rem;
         margin-bottom: 0.25rem;
     }
@@ -116,39 +219,44 @@
     }
 
     .legal a {
-        color: var(--color-slate-900);
+        color: var(--color-ink);
         text-decoration: underline;
         text-underline-offset: 4px;
+        transition: color .3s ease;
+    }
+
+    .legal a:hover {
+        color: var(--color-pink);
     }
 
     .legal blockquote {
-        border-left: 2px solid var(--color-slate-200);
+        border-left: 2px solid var(--color-ink);
         padding-left: 1rem;
-        color: var(--color-slate-500);
+        color: var(--color-ink-500);
     }
 
     .legal code {
-        background: var(--color-slate-100);
-        border-radius: 0.25rem;
-        padding: 0.1rem 0.3rem;
+        background: var(--color-tint);
+        border-radius: 0.5rem;
+        padding: 0.1rem 0.35rem;
         font-size: 0.875em;
     }
 
     .legal table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
     }
 
     .legal th,
     .legal td {
-        border: 1px solid var(--color-slate-200);
+        border: 1px solid var(--color-ink-100);
         padding: 0.5rem 0.75rem;
         text-align: left;
     }
 
     .legal hr {
-        border-color: var(--color-slate-200);
+        border-color: var(--color-ink-100);
         margin-block: 2rem;
     }
 }

@@ -5,10 +5,15 @@ app:
     disclaimer: 'Uses an unofficial Bring! API. Not affiliated with Bring! Labs AG.'
     privacy_policy: 'Privacy Policy'
     imprint: 'Imprint'
+    # %heart% is the brand's heart glyph; the template supplies the markup.
+    made_by: 'made with %heart% by CPY PST GmbH'
 
 login:
     title: 'Sign in · Bring Connector'
     heading: 'Sign in'
+    # Brand headline treatment: all lowercase, one word in 700. Rendered with |raw,
+    # so the markup stays here rather than being assembled in the template.
+    heading_html: 'sign <strong class="font-bold">in</strong>'
     lead: 'Use your Bring! account. There is no separate password here — if this is your first time, signing in creates your account.'
     email: 'Bring! email address'
     password: 'Bring! password'
@@ -86,6 +91,7 @@ settings:
 
 claude:
     heading: 'Connect Claude'
+    heading_html: 'connect <strong class="font-bold">claude</strong>'
     lead: 'In Claude: Settings → Connectors → Add custom connector.'
     endpoint: 'MCP endpoint'
     endpoint_missing: 'The operator has not configured the public MCP address. Ask them for the URL.'
@@ -99,6 +105,7 @@ claude:
 
 connector:
     heading: 'Connectors'
+    heading_html: 'add a <strong class="font-bold">connector</strong>'
     lead: 'Each connector is a client ID you enter in Claude. Revoking one cuts off that connection immediately, without touching the others.'
     endpoint_heading: 'MCP endpoint'
     endpoint_help: 'In Claude: Settings → Connectors → Add custom connector, paste this URL, then enter the client ID under Advanced settings.'

@@ -1,0 +1,48 @@
+# Overlay that swaps Bring! for a stub, so the tests behind the login form run
+# without a real Bring! account. Layered on top of the deployment file rather
+# than folded into it: nothing here belongs in a production stack.
+#
+#   docker compose -f docker-compose.yml -f tests/docker-compose.e2e.yml up -d --build
+#
+# Then run the suite with BRING_TEST_EMAIL / BRING_TEST_PASSWORD set to the
+# values below, and `account.spec.ts` stops skipping itself.
+#
+# Relative paths resolve against the project directory, which Compose takes
+# from the *first* -f file — hence ./tests/… rather than ./…
+services:
+  bring-stub:
+    # Same tag as mcp/Dockerfile. The stub is standard library only, so there
+    # is nothing to install and no image of its own to build; bump this
+    # together with the one Dependabot watches over there.
+    image: python:3.14-slim
+    container_name: bring-stub
+    restart: unless-stopped
+    command: ["python", "/srv/stub.py"]
+    environment:
+      STUB_EMAIL: "${BRING_STUB_EMAIL:-stub@example.test}"
+      STUB_PASSWORD: "${BRING_STUB_PASSWORD:-stub-password}"
+      # At least two, so the connector dialog has something to choose between.
+      STUB_LISTS: "${BRING_STUB_LISTS:-Shopping,Hardware store}"
+      STUB_PORT: "8081"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./tests/bring-stub/stub.py:/srv/stub.py:ro
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    environment:
+      # The only thing that has to change in the app: every Bring! URL the
+      # client builds hangs off this one value. No test-only code ships in the
+      # image because of it.
+      BRING_API_BASE_URL: "http://bring-stub:8081/rest/"
+    depends_on:
+      - bring-stub
+
+  # Signing in reaches Bring! from the web container only, but this role runs
+  # the same image and would otherwise keep the production default.
+  cron:
+    environment:
+      BRING_API_BASE_URL: "http://bring-stub:8081/rest/"

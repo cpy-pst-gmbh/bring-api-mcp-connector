@@ -6,12 +6,12 @@
   a `modal` controller scope.
 #}
 <div class="flex items-start justify-between gap-4">
-    <h3 class="text-lg font-semibold tracking-tight">{{ heading }}</h3>
+    <h3 class="text-xl font-bold tracking-tight">{{ heading }}</h3>
 
     {# Negative margin pulls the hit area flush with the padding edge while
        keeping it comfortably large. #}
     <button type="button" data-action="modal#close" aria-label="{{ 'app.close'|trans }}"
-            class="-m-1.5 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300">
+            class="-m-2 shrink-0 rounded-control p-2 text-sage transition-colors duration-300 hover:text-pink focus:outline-2 focus:outline-offset-2 focus:outline-pink">
         <svg class="size-5" viewBox="0 0 20 20" fill="none" stroke="currentColor"
              stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
             <path d="M5.5 5.5l9 9M14.5 5.5l-9 9" />

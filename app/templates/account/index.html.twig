@@ -6,9 +6,9 @@
     {% embed 'wizard/_layout.html.twig' with {current_step: current_step} %}
         {% block form %}
             {% if consent_pending %}
-                <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <div class="mb-6 rounded-action bg-tint px-5 py-4 text-[15px] text-ink shadow-e1">
                     {{ 'account.consent_pending'|trans }}
-                    <a href="{{ path('app_consent') }}" class="font-medium underline underline-offset-4">
+                    <a href="{{ path('app_consent') }}" class="font-bold underline underline-offset-4 transition-colors duration-300 hover:text-pink">
                         {{ 'account.consent_continue'|trans }}
                     </a>.
                 </div>
@@ -16,17 +16,17 @@
 
             {% if current_step == 2 %}
                 {# Nothing set up yet, so the form is the step. #}
-                <h1 class="text-xl font-semibold tracking-tight">
-                    {{ 'wizard.step.connector.title'|trans }}
+                <h1 class="text-[26px] font-normal leading-tight tracking-tight">
+                    {{ 'connector.heading_html'|trans|raw }}
                 </h1>
-                <p class="mt-2 text-sm text-slate-600">{{ 'connector.lead'|trans }}</p>
+                <p class="mt-3 text-base leading-relaxed text-ink-700">{{ 'connector.lead'|trans }}</p>
 
-                <div class="mt-6">
+                <div class="mt-8">
                     {{ include('account/_connector_form.html.twig', {id_prefix: 'connector'}) }}
                 </div>
             {% else %}
-                <h1 class="text-xl font-semibold tracking-tight">{{ 'claude.heading'|trans }}</h1>
-                <p class="mt-2 text-sm text-slate-600">{{ 'claude.lead'|trans }}</p>
+                <h1 class="text-[26px] font-normal leading-tight tracking-tight">{{ 'claude.heading_html'|trans|raw }}</h1>
+                <p class="mt-3 text-base leading-relaxed text-ink-700">{{ 'claude.lead'|trans }}</p>
 
                 {% if connectors|length > 1 %}
                     {# More than one, so which set of credentials is on screen
@@ -34,15 +34,15 @@
                        selection survives a reload and can be bookmarked, and
                        without JavaScript the submit button still works. #}
                     <form method="get" action="{{ path('app_account') }}"
-                          class="mt-6 flex flex-wrap items-end gap-3"
+                          class="mt-8 flex flex-wrap items-end gap-4"
                           data-controller="auto-submit">
                         <div class="grow">
-                            <label for="connector-select" class="mb-1 block text-sm font-medium text-slate-700">
+                            <label for="connector-select" class="mb-2 block text-[15px] font-medium text-ink">
                                 {{ 'claude.choose'|trans }}
                             </label>
                             <select id="connector-select" name="connector"
                                     data-action="change->auto-submit#submit"
-                                    class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-xs outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200">
+                                    class="block w-full rounded-control border border-ink-100 bg-white px-4 py-3.5 text-base text-ink shadow-inset-field outline-none focus:border-pink focus:ring-2 focus:ring-pink-100">
                                 {% for connector in connectors %}
                                     <option value="{{ connector.identifier }}"
                                             {{ connector.identifier == selected.identifier ? 'selected' : '' }}>
@@ -53,50 +53,50 @@
                         </div>
 
                         <button type="submit" data-auto-submit-target="fallback"
-                                class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2">
+                                class="rounded-control border border-ink-100 bg-white px-5 py-3.5 text-[15px] font-medium text-ink shadow-e1 transition-colors duration-300 hover:border-pink focus:outline-2 focus:outline-offset-2 focus:outline-pink">
                             {{ 'claude.choose_submit'|trans }}
                         </button>
                     </form>
                 {% endif %}
 
-                <dl class="mt-6 space-y-4">
+                <dl class="mt-8 space-y-6">
                     <div>
-                        <dt class="text-sm font-medium text-slate-700">{{ 'claude.endpoint'|trans }}</dt>
-                        <dd class="mt-1">
+                        <dt class="text-[15px] font-medium text-ink">{{ 'claude.endpoint'|trans }}</dt>
+                        <dd class="mt-2.5">
                             {% if mcp_endpoint %}
-                                <code class="block overflow-x-auto rounded-lg bg-slate-50 px-3 py-2 font-mono text-sm text-slate-800">{{ mcp_endpoint }}</code>
+                                <code class="block overflow-x-auto rounded-action bg-tint p-4 font-mono text-[15px] text-ink shadow-inset-field">{{ mcp_endpoint }}</code>
                             {% else %}
-                                <p class="text-sm text-amber-700">{{ 'claude.endpoint_missing'|trans }}</p>
+                                <p class="text-[15px] text-pink-700">{{ 'claude.endpoint_missing'|trans }}</p>
                             {% endif %}
                         </dd>
                     </div>
 
                     <div>
-                        <dt class="text-sm font-medium text-slate-700">{{ 'claude.client_id'|trans }}</dt>
-                        <dd class="mt-1">
-                            <code id="client-id" class="block overflow-x-auto rounded-lg bg-slate-50 px-3 py-2 font-mono text-sm text-slate-800">{{ selected.identifier }}</code>
-                            <p class="mt-1.5 text-sm text-slate-500">{{ 'claude.client_id_help'|trans }}</p>
+                        <dt class="text-[15px] font-medium text-ink">{{ 'claude.client_id'|trans }}</dt>
+                        <dd class="mt-2.5">
+                            <code id="client-id" class="block overflow-x-auto rounded-action bg-tint p-4 font-mono text-[15px] text-ink shadow-inset-field">{{ selected.identifier }}</code>
+                            <p class="mt-2.5 text-[15px] leading-normal text-ink-500">{{ 'claude.client_id_help'|trans }}</p>
                         </dd>
                     </div>
                 </dl>
 
-                <p class="mt-4 text-sm text-slate-500">
+                <p class="mt-6 text-[15px] leading-normal text-ink-500">
                     {{ 'claude.writes_to'|trans({
                         '%list%': selected.defaultListName ?? 'claude.writes_to_first'|trans,
                     }) }}
                 </p>
 
-                <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-5"
+                <div class="mt-8 flex flex-wrap items-center gap-5 border-t border-sage-100 pt-6"
                      data-controller="modal">
                     <button type="button" data-action="modal#open"
-                            class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2">
+                            class="rounded-control border border-ink-100 bg-white px-5 py-3.5 text-[15px] font-medium text-ink shadow-e1 transition-colors duration-300 hover:border-pink focus:outline-2 focus:outline-offset-2 focus:outline-pink">
                         {{ 'claude.add_another'|trans }}
                     </button>
 
                     <form method="post" action="{{ path('app_connector_revoke', {identifier: selected.identifier}) }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('revoke_connector_' ~ selected.identifier) }}">
                         <button type="submit"
-                                class="text-sm font-medium text-red-600 underline-offset-4 hover:underline">
+                                class="text-[15px] font-medium text-pink-700 underline underline-offset-4 transition-opacity duration-300 hover:opacity-80">
                             {{ 'connector.revoke'|trans }}
                         </button>
                     </form>
@@ -116,19 +116,19 @@
                     {# m-auto restores the centering the UA stylesheet gives a
                        modal dialog — Tailwind's preflight resets margins to 0. #}
                     <dialog id="connector-dialog" data-modal-target="dialog" data-action="click->modal#closeOnBackdrop"
-                            class="m-auto w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-lg backdrop:bg-slate-900/40">
+                            class="m-auto w-full max-w-md rounded-card bg-white p-8 shadow-dialog backdrop:bg-ink/40">
                         {{ include('dialog/_header.html.twig', {heading: 'connector.modal.heading'|trans}) }}
 
-                        <div class="mt-5">
+                        <div class="mt-6">
                             {% embed 'account/_connector_form.html.twig' with {id_prefix: 'modal-connector'} %}
                                 {% block actions %}
-                                    <div class="mt-6 flex justify-end gap-3">
+                                    <div class="flex justify-end gap-4">
                                         <button type="button" data-action="modal#close"
-                                                class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2">
+                                                class="rounded-control border border-ink-100 bg-white px-5 py-3.5 text-[15px] font-medium text-ink shadow-e1 transition-colors duration-300 hover:border-pink focus:outline-2 focus:outline-offset-2 focus:outline-pink">
                                             {{ 'connector.modal.cancel'|trans }}
                                         </button>
                                         <button type="submit"
-                                                class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2">
+                                                class="rounded-action bg-pink px-6 py-3.5 text-[15px] font-bold text-white shadow-pink transition-opacity duration-300 hover:opacity-80 focus:outline-2 focus:outline-offset-2 focus:outline-pink">
                                             {{ 'connector.modal.submit'|trans }}
                                         </button>
                                     </div>
@@ -141,22 +141,22 @@
         {% endblock %}
 
         {% block below %}
-            <section class="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <h2 class="flex items-center gap-2 border-b border-slate-100 px-6 py-4 text-sm font-semibold text-slate-900">
-                    {{ include('icon/settings.html.twig', {class: 'size-5 text-slate-400'}) }}
+            <section class="mt-10 rounded-card bg-white shadow-e2">
+                <h2 class="flex items-center gap-3 border-b border-sage-100 px-8 py-6 text-[15px] font-bold text-ink">
+                    {{ include('icon/settings.html.twig', {class: 'size-5 text-sage'}) }}
                     {{ 'settings.heading'|trans }}
                 </h2>
 
-                <div class="divide-y divide-slate-100">
-                    <div class="flex flex-wrap items-center justify-between gap-4 px-6 py-4"
+                <div class="divide-y divide-sage-100">
+                    <div class="flex flex-wrap items-center justify-between gap-6 px-8 py-6"
                          data-controller="modal">
                         <div class="min-w-0">
-                            <p class="text-sm font-medium text-slate-900">{{ 'account.password.heading'|trans }}</p>
-                            <p class="mt-1 text-sm text-slate-500">{{ 'account.password.lead'|trans }}</p>
+                            <p class="text-base font-bold text-ink">{{ 'account.password.heading'|trans }}</p>
+                            <p class="mt-1.5 text-[15px] leading-normal text-ink-500">{{ 'account.password.lead'|trans }}</p>
                         </div>
 
                         <button type="button" data-action="modal#open"
-                                class="shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2">
+                                class="shrink-0 rounded-control border border-ink-100 bg-white px-5 py-3 text-[15px] font-medium text-ink shadow-e1 transition-colors duration-300 hover:border-pink focus:outline-2 focus:outline-offset-2 focus:outline-pink">
                             {{ 'account.password.button'|trans }}
                         </button>
 
@@ -176,24 +176,24 @@
                         <dialog id="password-dialog" data-modal-target="dialog"
                                 data-action="click->modal#closeOnBackdrop"
                                 {{ form.vars.submitted and not form.vars.valid ? 'open' : '' }}
-                                class="m-auto w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-lg backdrop:bg-slate-900/40">
+                                class="m-auto w-full max-w-md rounded-card bg-white p-8 shadow-dialog backdrop:bg-ink/40">
                             {{ include('dialog/_header.html.twig', {heading: 'account.password.heading'|trans}) }}
-                            <p class="mt-3 text-sm text-slate-600">{{ 'account.password.lead'|trans }}</p>
-                            <p class="mt-3 text-xs text-slate-400">
+                            <p class="mt-4 text-base leading-relaxed text-ink-700">{{ 'account.password.lead'|trans }}</p>
+                            <p class="mt-3 text-sm text-ink-300">
                                 {{ 'account.password.updated_at'|trans({'%date%': credential.updatedAt|date('Y-m-d H:i')}) }}
                             </p>
 
-                            <div class="mt-5">
+                            <div class="mt-6">
                                 {{ form_start(form) }}
                                     {{ form_row(form.plainPassword) }}
 
-                                    <div class="mt-6 flex justify-end gap-3">
+                                    <div class="mt-7 flex justify-end gap-4">
                                         <button type="button" data-action="modal#close"
-                                                class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2">
+                                                class="rounded-control border border-ink-100 bg-white px-5 py-3.5 text-[15px] font-medium text-ink shadow-e1 transition-colors duration-300 hover:border-pink focus:outline-2 focus:outline-offset-2 focus:outline-pink">
                                             {{ 'account.password.cancel'|trans }}
                                         </button>
                                         <button type="submit"
-                                                class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2">
+                                                class="rounded-action bg-pink px-6 py-3.5 text-[15px] font-bold text-white shadow-pink transition-opacity duration-300 hover:opacity-80 focus:outline-2 focus:outline-offset-2 focus:outline-pink">
                                             {{ 'account.password.submit'|trans }}
                                         </button>
                                     </div>
@@ -202,15 +202,15 @@
                         </dialog>
                     </div>
 
-                    <div class="flex flex-wrap items-center justify-between gap-4 px-6 py-4"
+                    <div class="flex flex-wrap items-center justify-between gap-6 px-8 py-6"
                          data-controller="modal">
                         <div class="min-w-0">
-                            <p class="text-sm font-medium text-slate-900">{{ 'account.delete.heading'|trans }}</p>
-                            <p class="mt-1 text-sm text-slate-500">{{ 'account.delete.lead'|trans }}</p>
+                            <p class="text-base font-bold text-ink">{{ 'account.delete.heading'|trans }}</p>
+                            <p class="mt-1.5 text-[15px] leading-normal text-ink-500">{{ 'account.delete.lead'|trans }}</p>
                         </div>
 
                         <button type="button" data-action="modal#open"
-                                class="shrink-0 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2">
+                                class="shrink-0 rounded-control border border-pink-300 bg-white px-5 py-3 text-[15px] font-medium text-pink-700 shadow-e1 transition-colors duration-300 hover:bg-pink-100 focus:outline-2 focus:outline-offset-2 focus:outline-pink">
                             {{ 'account.delete.button'|trans }}
                         </button>
 
@@ -226,18 +226,18 @@
 
                         <dialog id="delete-account-dialog" data-modal-target="dialog"
                                 data-action="click->modal#closeOnBackdrop"
-                                class="m-auto w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-lg backdrop:bg-slate-900/40">
+                                class="m-auto w-full max-w-md rounded-card bg-white p-8 shadow-dialog backdrop:bg-ink/40">
                             {{ include('dialog/_header.html.twig', {heading: 'account.delete.modal.heading'|trans}) }}
-                            <p class="mt-3 text-sm text-slate-600">{{ 'account.delete.modal.body'|trans }}</p>
+                            <p class="mt-4 text-base leading-relaxed text-ink-700">{{ 'account.delete.modal.body'|trans }}</p>
 
-                            <form method="post" action="{{ path('app_account_delete') }}" class="mt-6 flex justify-end gap-3">
+                            <form method="post" action="{{ path('app_account_delete') }}" class="mt-7 flex justify-end gap-4">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete_account') }}">
                                 <button type="button" data-action="modal#close"
-                                        class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2">
+                                        class="rounded-control border border-ink-100 bg-white px-5 py-3.5 text-[15px] font-medium text-ink shadow-e1 transition-colors duration-300 hover:border-pink focus:outline-2 focus:outline-offset-2 focus:outline-pink">
                                     {{ 'account.delete.modal.cancel'|trans }}
                                 </button>
                                 <button type="submit"
-                                        class="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2">
+                                        class="rounded-action bg-ink px-6 py-3.5 text-[15px] font-bold text-white shadow-e2 transition-opacity duration-300 hover:opacity-80 focus:outline-2 focus:outline-offset-2 focus:outline-pink">
                                     {{ 'account.delete.modal.confirm'|trans }}
                                 </button>
                             </form>

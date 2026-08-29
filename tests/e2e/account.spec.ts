@@ -106,9 +106,9 @@ test.describe('the wizard', () => {
 
         // Exactly one is current, and the others are visibly held back.
         await expect(page.locator('li[aria-current="step"]')).toHaveCount(1);
-        await expect(steps.nth(0)).toHaveClass(/opacity-45/);
-        await expect(steps.nth(1)).not.toHaveClass(/opacity-45/);
-        await expect(steps.nth(2)).toHaveClass(/opacity-45/);
+        await expect(steps.nth(0)).toHaveClass(/opacity-50/);
+        await expect(steps.nth(1)).not.toHaveClass(/opacity-50/);
+        await expect(steps.nth(2)).toHaveClass(/opacity-50/);
     });
 
     test('starts at step 2 while no connector exists', async ({ page }) => {
