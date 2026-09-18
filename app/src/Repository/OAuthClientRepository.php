@@ -8,6 +8,7 @@ use App\Entity\OAuthClient;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @extends ServiceEntityRepository<OAuthClient>
@@ -27,7 +28,7 @@ class OAuthClientRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('c')
             ->andWhere('c.user = :user')
             ->setParameter('user', $user)
-            ->orderBy('c.createdAt', 'DESC')
+            ->orderBy('c.createdAt', SortDirection::Descending)
             ->getQuery()
             ->getResult();
     }

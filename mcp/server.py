@@ -25,6 +25,7 @@ from fastmcp.exceptions import ToolError
 from fastmcp.server.auth import RemoteAuthProvider
 from fastmcp.server.auth.providers.jwt import JWTVerifier
 from fastmcp.server.dependencies import get_access_token, get_context
+from mcp.types import ToolAnnotations
 from pydantic import AnyHttpUrl
 
 logging.basicConfig(
@@ -262,7 +263,14 @@ async def _resolve_list(name: str | None) -> tuple[Bring, str, str]:
     raise ToolError(f"List {wanted!r} not found. Available: {available}")
 
 
-@mcp.tool
+@mcp.tool(
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    )
+)
 async def list_shopping_lists() -> list[str]:
     """Names all available Bring shopping lists."""
     entry = await _session()
@@ -272,7 +280,17 @@ async def list_shopping_lists() -> list[str]:
     return [candidate.name for candidate in lists]
 
 
-@mcp.tool
+@mcp.tool(
+    annotations=ToolAnnotations(
+        # Bring keys items by name, so a repeat updates rather than duplicates.
+        # Not promised idempotent all the same: the protocol is
+        # reverse-engineered, and a blind retry is the client's call to make.
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    )
+)
 async def add_items(
     items: list[str],
     list_name: str | None = None,
@@ -311,7 +329,14 @@ def _describe(purchase) -> str:
     return purchase.itemId
 
 
-@mcp.tool
+@mcp.tool(
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=True,
+    )
+)
 async def get_shopping_list(list_name: str | None = None) -> dict:
     """Shows open and already completed items of a list.
 
@@ -328,7 +353,16 @@ async def get_shopping_list(list_name: str | None = None) -> dict:
     }
 
 
-@mcp.tool
+@mcp.tool(
+    annotations=ToolAnnotations(
+        # Removes the item from the open list. Reversible via add_items, but not
+        # additive, and that is what the hint distinguishes.
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    )
+)
 async def complete_item(item: str, list_name: str | None = None) -> str:
     """Ticks an item off the list.
 

@@ -605,3 +605,7 @@ token to the MCP server as a bearer token, for example:
 ```bash
 curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8000/internal/bring-credentials
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE).

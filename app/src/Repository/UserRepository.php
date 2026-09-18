@@ -8,6 +8,7 @@ use App\Entity\User;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 
 /**
  * @extends ServiceEntityRepository<User>
@@ -36,7 +37,7 @@ class UserRepository extends ServiceEntityRepository
             ->andWhere('u.lastActiveAt <= :since')
             ->andWhere('u.inactivityNoticeSentAt IS NULL')
             ->setParameter('since', $inactiveSince)
-            ->orderBy('u.lastActiveAt', 'ASC')
+            ->orderBy('u.lastActiveAt', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -59,7 +60,7 @@ class UserRepository extends ServiceEntityRepository
             ->andWhere('u.inactivityNoticeSentAt <= :noticed')
             ->setParameter('since', $inactiveSince)
             ->setParameter('noticed', $noticedBefore)
-            ->orderBy('u.lastActiveAt', 'ASC')
+            ->orderBy('u.lastActiveAt', SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
